@@ -7,16 +7,18 @@ import { GenCard } from '@/components/GenCard';
 import { DESIGNS } from '@/designs/index.js';
 import { Link } from '@/lib/router';
 
-// The gallery's fixed settings.
+// The gallery's fixed settings. Field designs fill the card edge to edge;
+// the others ignore the frame.
 const DETAIL = 5;
+const FRAME = 'fill';
 
 const randomSeed = () => 1 + Math.floor(Math.random() * 9998);
 
 // Lives outside the component so the seeds survive visits to design pages.
 let saved = Object.fromEntries(DESIGNS.map((d) => [d.id, randomSeed()]));
 
-// Links carry the seed over to the design page.
-const hrefFor = (design, seed) => `?d=${design.id}&seed=${seed}&detail=${DETAIL}`;
+// Links carry the seed, and the frame for field designs, over to the design page.
+const hrefFor = (design, seed) => `?d=${design.id}&seed=${seed}&detail=${DETAIL}${design.framed ? `&frame=${FRAME}` : ''}`;
 
 export default function Gallery() {
   const [seeds, setSeeds] = useState(saved);
@@ -53,7 +55,7 @@ export default function Gallery() {
                 aria-label={`Open ${design.id}, seed ${seed}`}
                 className="block h-full rounded-xl outline-none transition hover:brightness-125 focus-visible:ring-3 focus-visible:ring-ring/50"
               >
-                <GenCard form={design.id} seed={seed} detail={DETAIL} fig={`0.${i + 1}`} animate="hover" />
+                <GenCard form={design.id} seed={seed} detail={DETAIL} fig={`0.${i + 1}`} frame={FRAME} animate="hover" />
               </Link>
               <Button
                 variant="outline"

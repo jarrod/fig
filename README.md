@@ -20,7 +20,7 @@ The site runs at http://localhost:5174. It's built with React, Tailwind CSS v4 a
 
 ## The site
 
-- **Gallery** (`/`): every design as a card, with a button on each to try a new seed, at fixed settings (detail 5, normal speed, the default frame, a random seed per visit), and a card animates while it is hovered or has keyboard focus, then pauses where it is. A skeleton shows in each card's place until its drawing is ready.
+- **Gallery** (`/`): every design as a card, with a button on each to try a new seed, at fixed settings (detail 5, normal speed, the Fill frame for field designs, a random seed per visit), and a card animates while it is hovered or has keyboard focus, then pauses where it is. A skeleton shows in each card's place until its drawing is ready.
 - **Design page** (`/?d=flows&seed=6470&detail=5`): a large preview with seed, frame, detail, animation, speed, line colour, background, transparency and line width. Every setting is kept in the URL, so links can be shared.
 - **Export**: download an SVG, copy its code, or download an animated SVG that loops on its own with SMIL (no script). Animated files morph each shape smoothly when every frame has the same shapes, and otherwise swap whole frames.
 
