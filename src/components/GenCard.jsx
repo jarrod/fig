@@ -20,7 +20,7 @@ function CardSkeleton() {
         <Skeleton className={`h-2.5 w-12 ${bar}`} />
         <Skeleton className={`h-2.5 w-8 ${bar}`} />
       </div>
-      <Skeleton className={`mt-0.5 mb-1.5 aspect-[320/270] w-full ${bar}`} />
+      <Skeleton className={`mt-0.5 mb-1.5 aspect-[320/270] w-full rounded-lg bg-white/[0.06]`} />
       <Skeleton className={`mt-1 h-3.5 w-2/5 ${bar}`} />
     </div>
   );

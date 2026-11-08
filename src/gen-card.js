@@ -18,7 +18,8 @@ const STYLE = `
   :host { display: block; height: 100%; }
   .card { background: #0e1011; border: 1px solid #26292b; border-radius: 12px; padding: 14px 16px 16px; height: 100%; box-sizing: border-box; }
   .meta { display: flex; justify-content: space-between; gap: 8px; font: 11px/1.4 ui-monospace, Menlo, monospace; color: #5e6367; }
-  .art { aspect-ratio: ${WIDTH} / ${HEIGHT}; margin: 2px 0 6px; }
+  /* Rounded, so drawings that run edge to edge (the Fill frame) get soft corners. */
+  .art { aspect-ratio: ${WIDTH} / ${HEIGHT}; margin: 2px 0 6px; border-radius: 8px; overflow: hidden; }
   canvas { display: block; width: 100%; height: 100%; opacity: 0; }
   :host([ready]) canvas { opacity: 1; }
   @media (prefers-reduced-motion: no-preference) { canvas { transition: opacity 0.35s; } }
