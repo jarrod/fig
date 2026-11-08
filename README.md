@@ -32,3 +32,9 @@ npm run dev
 ```
 
 Then open http://localhost:5174. `npm run build` writes a static site to `dist/`.
+
+## License
+
+The code is available under the [MIT License](LICENSE).
+
+The drawings are yours. Any SVG you export from Fig, still or animated, is free to use for any purpose, personal or commercial, with no attribution needed. They're dedicated to the public domain under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
