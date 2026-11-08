@@ -3,11 +3,11 @@
 // Run with `npm run banner`. Change the design, seed or detail below.
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { DESIGN, DESIGNS } from '../src/designs/index.js';
-import { build, exportAnimatedSvg, DEFAULT_STYLE } from '../src/core/render.js';
+import { TAU, build, exportAnimatedSvg, fitDesign, DEFAULT_STYLE } from '../src/core/render.js';
 
-const ID = 'contours';
-const SEED = 6470;
-const DETAIL = 4;
+const ID = 'ridges';
+const SEED = 8123;
+const DETAIL = 5;
 
 // Colours from GitHub's own light and dark themes, so the banner sits flush.
 const THEMES = {
@@ -35,17 +35,38 @@ function corners(inset, size) {
   return pts.map(([x, y, sx, sy]) => `M${x + sx * size} ${y}H${x}V${y + sy * size}`).join('');
 }
 
+// The drawing's outline in the export's 320 × 270 frame, over the whole loop,
+// so it can be scaled to fill its area whatever the design's shape.
+function outline() {
+  const box = fitDesign(design, SEED, DETAIL, true);
+  let [x0, y0, x1, y1] = [Infinity, Infinity, -Infinity, -Infinity];
+  for (let i = 0; i < 24; i++) {
+    for (const f of build(design, SEED, DETAIL, (i / 24) * TAU).faces) {
+      for (const [x, y] of f.p) {
+        const X = x * box.k + box.ox;
+        const Y = y * box.k + box.oy;
+        [x0, y0, x1, y1] = [Math.min(x0, X), Math.min(y0, Y), Math.max(x1, X), Math.max(y1, Y)];
+      }
+    }
+  }
+  const m = 2; // Room for the line width.
+  return [x0 - m, y0 - m, x1 - x0 + 2 * m, y1 - y0 + 2 * m];
+}
+const [vx, vy, vw, vh] = outline();
+
 function banner(theme) {
   const t = THEMES[theme];
   const style = { ...DEFAULT_STYLE, line: t.line, background: t.bg, transparent: true, width: 0.8 };
   const { svg } = exportAnimatedSvg(design, SEED, DETAIL, style);
   const drawing = svg.replace(/^<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
 
-  // The drawing keeps the export's 320 × 270 frame, scaled up on the right.
-  const dw = 440;
-  const dh = Math.round((dw * 270) / 320);
-  const dx = W - dw - 40;
-  const dy = Math.round((H - dh) / 2) + 4;
+  // The drawing is scaled to fill the area right of the text, and centred in it.
+  const area = { x: 670, y: 56, w: 480, h: 288 };
+  const k = Math.min(area.w / vw, area.h / vh);
+  const dw = vw * k;
+  const dh = vh * k;
+  const dx = area.x + (area.w - dw) / 2;
+  const dy = area.y + (area.h - dh) / 2;
   const cx = dx + dw / 2;
   const cy = dy + dh / 2;
 
@@ -60,7 +81,7 @@ function banner(theme) {
 </style>
 <defs>
   <pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="${t.faint}"/></pattern>
-  <radialGradient id="fade" cx="${cx}" cy="${cy}" r="${dw * 0.62}" gradientUnits="userSpaceOnUse">
+  <radialGradient id="fade" cx="${cx}" cy="${cy}" r="${Math.max(dw, dh) * 0.62}" gradientUnits="userSpaceOnUse">
     <stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
   </radialGradient>
   <mask id="glow"><rect width="${W}" height="${H}" fill="url(#fade)"/></mask>
@@ -82,7 +103,7 @@ function banner(theme) {
   </g>
 </g>
 
-<svg class="art" x="${dx}" y="${dy}" width="${dw}" height="${dh}" viewBox="0 0 320 270" overflow="visible">${drawing}</svg>
+<svg class="art" x="${dx}" y="${dy}" width="${dw}" height="${dh}" viewBox="${vx.toFixed(1)} ${vy.toFixed(1)} ${vw.toFixed(1)} ${vh.toFixed(1)}" overflow="visible">${drawing}</svg>
 </svg>
 `;
 }
