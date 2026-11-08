@@ -6,7 +6,7 @@ import { DESIGN, DESIGNS } from '@/designs/index.js';
 import { TAU, build, exportAnimatedSvg, exportSvg, fitDesign } from '@/core/render.js';
 
 const DRAWING = { form: 'damped', seed: 3901, detail: 5, speed: 0.5 };
-const STYLE = { line: '#9ca1a6', background: '#08090a', transparent: true, width: 1 };
+const STYLE = { line: '#d317b1', background: '#08090a', transparent: true, width: 1 };
 
 // Built once. It is the design's own animated SVG export, which moves by
 // itself (SMIL), at half speed; visitors who ask for less motion get the
@@ -90,7 +90,7 @@ export function Hero() {
           <div
             ref={art}
             aria-hidden="true"
-            className="w-full opacity-60 [&_path]:[vector-effect:non-scaling-stroke] [&_svg]:size-full"
+            className="w-full [&_path]:[vector-effect:non-scaling-stroke] [&_svg]:size-full"
             style={{ aspectRatio: `${view[2]} / ${view[3]}` }}
             dangerouslySetInnerHTML={{ __html: drawing }}
           />
