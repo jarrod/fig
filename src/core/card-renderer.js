@@ -17,26 +17,43 @@ const OPEN_WIDTH = 0.5;
 export function createRenderer(post) {
   const cards = new Map();
 
+  // `style` (optional) restyles a drawing for places other than a card, such
+  // as the home page's hero: `line` and `lineEnd` colour the lines (a
+  // top-to-bottom gradient when both are given), `width` scales the line
+  // widths, and `clear` makes closed faces cut a transparent hole instead of
+  // filling with the card's background, so whatever is behind the canvas
+  // shows through while hidden lines stay hidden.
   function draw(card, faces) {
     const { ctx, canvas, box } = card;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (!box || !faces.length) return;
-    const k = canvas.width / WIDTH;
-    ctx.setTransform(k, 0, 0, (canvas.height / HEIGHT), 0, 0);
+    // Scaled evenly and centred, so a canvas of any shape keeps the drawing's proportions.
+    const k = Math.min(canvas.width / WIDTH, canvas.height / HEIGHT);
+    ctx.setTransform(k, 0, 0, k, (canvas.width - WIDTH * k) / 2, (canvas.height - HEIGHT * k) / 2);
+    const style = card.style ?? {};
+    let line = style.line ?? LINE;
+    if (style.line && style.lineEnd) {
+      line = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+      line.addColorStop(0, style.line);
+      line.addColorStop(1, style.lineEnd);
+    }
+    const scale = style.width ?? 1;
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
-    ctx.strokeStyle = LINE;
+    ctx.strokeStyle = line;
     ctx.fillStyle = BACKGROUND;
-    // Faces are painted in order: a closed face is filled with the
-    // background to hide what is behind it, then outlined.
+    // Faces are painted in order: a closed face is filled to hide what is
+    // behind it, then outlined.
     for (const f of faces) {
       const path = new Path2D(pathData(f, box));
       if (f.open) {
-        ctx.lineWidth = OPEN_WIDTH;
+        ctx.lineWidth = OPEN_WIDTH * scale;
       } else {
+        if (style.clear) ctx.globalCompositeOperation = 'destination-out';
         ctx.fill(path);
-        ctx.lineWidth = FACE_WIDTH;
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.lineWidth = FACE_WIDTH * scale;
       }
       ctx.stroke(path);
     }
@@ -63,7 +80,7 @@ export function createRenderer(post) {
     },
 
     // Build the still drawing, its text and its fit. The heavy part.
-    init({ id, gen, form, seed, detail, frame, speed, animate, now }) {
+    init({ id, gen, form, seed, detail, frame, speed, animate, style, now }) {
       const card = cards.get(id);
       if (!card) return;
       const design = DESIGN[form] ?? DESIGNS[0];
@@ -74,6 +91,7 @@ export function createRenderer(post) {
         detail,
         frame,
         animate,
+        style,
         loop: loopMs(design, speed),
         box: faces.length ? fitDesign(design, seed, detail, animate, frame) : null,
         // A new drawing starts its loop from the beginning.

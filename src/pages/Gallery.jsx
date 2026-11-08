@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { DicesIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GenCard } from '@/components/GenCard';
+import { Hero } from '@/components/Hero';
 import { DESIGNS } from '@/designs/index.js';
 import { Link } from '@/lib/router';
 
@@ -20,8 +21,13 @@ let saved = Object.fromEntries(DESIGNS.map((d) => [d.id, randomSeed()]));
 // Links carry the seed, and the frame for field designs, over to the design page.
 const hrefFor = (design, seed) => `?d=${design.id}&seed=${seed}&detail=${DETAIL}${design.framed ? `&frame=${FRAME}` : ''}`;
 
+// Any design at any seed, for the hero's "Surprise me".
+const surprise = () => hrefFor(DESIGNS[Math.floor(Math.random() * DESIGNS.length)], randomSeed());
+const STAGE_INDEX = DESIGNS.findIndex((d) => d.id === 'minimal');
+
 export default function Gallery() {
   const [seeds, setSeeds] = useState(saved);
+  const [surpriseHref, setSurpriseHref] = useState(surprise);
   const reshuffle = (id) =>
     setSeeds((prev) => {
       let seed = randomSeed();
@@ -35,12 +41,24 @@ export default function Gallery() {
 
   return (
     <>
-      <header className="mb-6">
-        <h1 className="font-heading text-2xl font-semibold tracking-tight">Gen Cards</h1>
-        <p className="mt-1 max-w-[62ch] text-muted-foreground">
-          Generative line drawings, each made by one algorithm. Hover a card to see it move, or open it to change its
-          seed and style, then export it as an SVG for your own site.
-        </p>
+      <Hero
+        count={DESIGNS.length}
+        stageHref={hrefFor(DESIGNS[STAGE_INDEX], 77)}
+        stageFig={`0.${STAGE_INDEX + 1}`}
+        surpriseHref={surpriseHref}
+        // A fresh pick for next time, once this one has been followed.
+        onSurprise={() => setTimeout(() => setSurpriseHref(surprise()), 0)}
+      />
+
+      <header id="collection" className="mt-10 mb-6 flex scroll-mt-6 flex-wrap items-end justify-between gap-x-8 gap-y-2">
+        <div>
+          <h2 className="font-heading text-2xl font-semibold tracking-tight">The collection</h2>
+          <p className="mt-1 max-w-[62ch] text-muted-foreground">
+            Hover a card to see it move, or open it to change its seed and style, then export it as an SVG for your
+            own site.
+          </p>
+        </div>
+        <p className="font-mono text-xs text-muted-foreground">{DESIGNS.length} designs</p>
       </header>
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-3">

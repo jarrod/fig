@@ -128,6 +128,21 @@ export default function Designer({ design, params }) {
   const [s, setS] = useState(() => readSettings(params));
   const [building, setBuilding] = useState(false);
   const preview = useRef(null);
+  // On wide screens the drawing's panel is as tall as the control panel
+  // beside it; the drawing is centred in it at its own proportions.
+  const panel = useRef(null);
+  const [panelHeight, setPanelHeight] = useState(0);
+  useEffect(() => {
+    const wide = matchMedia('(min-width: 1024px)');
+    const measure = () => setPanelHeight(wide.matches ? panel.current.offsetHeight : 0);
+    const sized = new ResizeObserver(measure);
+    sized.observe(panel.current);
+    wide.addEventListener('change', measure);
+    return () => {
+      sized.disconnect();
+      wide.removeEventListener('change', measure);
+    };
+  }, []);
   const set = (patch) => setS((prev) => ({ ...prev, ...patch }));
   const setStyle = (patch) => setS((prev) => ({ ...prev, style: { ...prev.style, ...patch } }));
 
@@ -211,10 +226,14 @@ export default function Designer({ design, params }) {
           <div
             ref={preview}
             className={cn(
-              'overflow-hidden rounded-xl border [&_svg]:block [&_svg]:h-auto [&_svg]:w-full [&_path.line]:fill-none',
+              'overflow-hidden rounded-xl border [&_svg]:block [&_svg]:w-full [&_path.line]:fill-none',
+              panelHeight ? '[&_svg]:h-full' : '[&_svg]:h-auto',
               s.style.transparent &&
                 'bg-white bg-[length:16px_16px] bg-[position:0_0,8px_8px] [background-image:linear-gradient(45deg,#e4e4e0_25%,transparent_25%,transparent_75%,#e4e4e0_75%),linear-gradient(45deg,#e4e4e0_25%,transparent_25%,transparent_75%,#e4e4e0_75%)]',
             )}
+            // The panel's own colour matches the drawing's, so the space
+            // either side of a drawing narrower than the panel blends in.
+            style={panelHeight ? { height: panelHeight, ...(s.style.transparent ? {} : { backgroundColor: s.style.background }) } : undefined}
             dangerouslySetInnerHTML={{ __html: svg }}
           />
           <div className="mt-4">
@@ -236,7 +255,7 @@ export default function Designer({ design, params }) {
           </nav>
         </div>
 
-        <Card>
+        <Card ref={panel}>
           <CardContent className="grid gap-5">
             <Section title="Drawing">
               <Row label="Seed" htmlFor="seed">
