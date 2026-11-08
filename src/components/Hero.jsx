@@ -1,22 +1,38 @@
 // The home page's hero: the headline and a line of copy on a dark, softly
 // lit stage, with a Damped sine drawing from the collection scaled up behind
-// them, barely visible.
+// them, barely visible and slowly moving.
+import { useEffect, useRef } from 'react';
 import { DESIGN } from '@/designs/index.js';
-import { exportSvg } from '@/core/render.js';
+import { exportAnimatedSvg, exportSvg } from '@/core/render.js';
 
-const BACKDROP = { form: 'damped', seed: 3901, detail: 5 };
+const BACKDROP = { form: 'damped', seed: 3901, detail: 5, speed: 0.5 };
+const STYLE = { line: '#9ca1a6', background: '#08090a', transparent: true, width: 1 };
 
-// Drawn once, as a still SVG. Its faces are filled with the stage colour so
-// lines behind them stay hidden; the lines are kept hairline-thin however
-// large the drawing is scaled.
-const backdrop = exportSvg(DESIGN[BACKDROP.form], BACKDROP.seed, BACKDROP.detail, {
-  line: '#9ca1a6',
-  background: '#08090a',
-  transparent: true,
-  width: 1,
-}).replace('<svg ', '<svg preserveAspectRatio="xMidYMid meet" ');
+// Built once. It is the design's own animated SVG export, which moves by
+// itself (SMIL), at half speed; visitors who ask for less motion get the
+// still drawing instead. Its faces are filled with the stage colour so lines
+// behind them stay hidden, and the lines stay hairline-thin however large
+// the drawing is scaled.
+const still = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const design = DESIGN[BACKDROP.form];
+const backdrop = (
+  still
+    ? exportSvg(design, BACKDROP.seed, BACKDROP.detail, STYLE)
+    : exportAnimatedSvg(design, BACKDROP.seed, BACKDROP.detail, STYLE, { speed: BACKDROP.speed }).svg
+).replace('<svg ', '<svg preserveAspectRatio="xMidYMid meet" ');
 
 export function Hero() {
+  // The animation pauses while the hero is off screen, so it costs nothing
+  // while the visitor browses the cards.
+  const art = useRef(null);
+  useEffect(() => {
+    const svg = art.current?.querySelector('svg');
+    if (!svg?.pauseAnimations) return;
+    const seen = new IntersectionObserver(([entry]) => (entry.isIntersecting ? svg.unpauseAnimations() : svg.pauseAnimations()));
+    seen.observe(art.current);
+    return () => seen.disconnect();
+  }, []);
+
   return (
     <section
       aria-labelledby="hero-title"
@@ -31,6 +47,7 @@ export function Hero() {
         {/* The drawing, much larger than the hero, fading out toward its
             edges. */}
         <div
+          ref={art}
           className="absolute top-1/2 left-1/2 aspect-[320/270] w-[max(760px,82vw)] -translate-x-1/2 -translate-y-[48%] opacity-[0.2] [&_path]:[vector-effect:non-scaling-stroke] [&_svg]:size-full"
           style={{
             maskImage: 'radial-gradient(ellipse 45% 42% at 50% 50%, black 30%, transparent 100%)',
