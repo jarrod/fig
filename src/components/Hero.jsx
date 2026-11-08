@@ -2,6 +2,7 @@
 // dark, softly lit stage, and a Damped sine drawing from the collection
 // slowly moving on the right.
 import { useEffect, useRef } from 'react';
+import { SiteBar } from '@/components/SiteBar';
 import { DESIGN, DESIGNS } from '@/designs/index.js';
 import { TAU, build, exportAnimatedSvg, exportSvg, fitDesign } from '@/core/render.js';
 
@@ -70,7 +71,9 @@ export function Hero() {
       />
 
       {/* Text on the left, the drawing on the right; stacked on phones. */}
-      <div className="relative mx-auto grid max-w-6xl items-center gap-x-12 gap-y-4 px-4 pt-6 pb-12 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:pt-4 md:pb-16">
+      <SiteBar className="relative mx-auto max-w-6xl px-4 pt-2" />
+
+      <div className="relative mx-auto grid max-w-6xl items-center gap-x-12 gap-y-4 px-4 pt-4 pb-12 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:pt-0 md:pb-16">
         <div>
           <h1
             id="hero-title"
@@ -95,7 +98,7 @@ export function Hero() {
             dangerouslySetInnerHTML={{ __html: drawing }}
           />
           <figcaption className="mt-4 flex justify-end gap-4 font-mono text-[11px] text-white/40">
-            <span>Fig {fig}</span>
+            <span className="text-brand/80">Fig {fig}</span>
             <span>Seed {DRAWING.seed}</span>
           </figcaption>
         </figure>

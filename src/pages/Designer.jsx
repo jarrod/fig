@@ -19,6 +19,7 @@ import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { FramePicker } from '@/components/FramePicker';
+import { SiteBar } from '@/components/SiteBar';
 import { DEFAULT_FRAME, isFrame } from '@/core/frame.js';
 import { cn } from '@/lib/utils';
 import { DESIGNS } from '@/designs/index.js';
@@ -223,11 +224,48 @@ export default function Designer({ design, params }) {
 
   return (
     <>
-      {/* Links styled as buttons stay real links: shadcn's Base UI Button would give them role="button". */}
-      <Link href="./" className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'mb-4 -ml-2')}>
-        <ArrowLeftIcon data-icon="inline-start" />
-        All designs
-      </Link>
+      {/* The stage's soft spotlight, as on the home page, in the dark theme. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 hidden h-[480px] dark:block"
+        style={{ background: 'radial-gradient(ellipse 70% 60% at 50% -10%, rgba(255,255,255,0.08), transparent 70%)' }}
+      />
+
+      <SiteBar className="-mt-4 mb-6" />
+
+      {/* The design's own header: its label, name and description, with a
+          pager through the collection. Links styled as buttons stay real
+          links: shadcn's Base UI Button would give them role="button". */}
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+        <div className="min-w-0">
+          <p className="font-mono text-xs text-muted-foreground">
+            <span className="text-brand">Fig 0.{index + 1}</span> · Seed {s.seed}
+          </p>
+          <h1 className="mt-2 font-heading text-4xl leading-tight font-semibold tracking-[-0.03em] md:text-5xl">{name}</h1>
+          <p className="mt-2 max-w-[65ch] text-pretty text-muted-foreground">{description}</p>
+        </div>
+        <nav className="flex shrink-0 items-center gap-1" aria-label="Other designs">
+          <Link
+            href={`?d=${prev.id}`}
+            aria-label={`Previous design: ${prev.id}`}
+            title={prev.id}
+            className={buttonVariants({ variant: 'outline', size: 'icon-sm' })}
+          >
+            <ArrowLeftIcon />
+          </Link>
+          <span className="min-w-16 text-center font-mono text-xs text-muted-foreground tabular-nums">
+            {index + 1} / {DESIGNS.length}
+          </span>
+          <Link
+            href={`?d=${next.id}`}
+            aria-label={`Next design: ${next.id}`}
+            title={next.id}
+            className={buttonVariants({ variant: 'outline', size: 'icon-sm' })}
+          >
+            <ArrowRightIcon />
+          </Link>
+        </nav>
+      </header>
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div>
@@ -244,23 +282,6 @@ export default function Designer({ design, params }) {
             style={panelHeight ? { height: panelHeight, ...(s.style.transparent ? {} : { backgroundColor: s.style.background }) } : undefined}
             dangerouslySetInnerHTML={{ __html: svg }}
           />
-          <div className="mt-4">
-            <div className="font-mono text-xs text-muted-foreground">
-              Fig 0.{index + 1} · {design.id} · seed {s.seed}
-            </div>
-            <h1 className="mt-1 font-heading text-2xl font-semibold tracking-tight">{name}</h1>
-            <p className="mt-1 max-w-[65ch] text-muted-foreground">{description}</p>
-          </div>
-          <nav className="mt-4 flex justify-between" aria-label="Other designs">
-            <Link href={`?d=${prev.id}`} className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), '-ml-2')}>
-              <ArrowLeftIcon data-icon="inline-start" />
-              {prev.id}
-            </Link>
-            <Link href={`?d=${next.id}`} className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), '-mr-2')}>
-              {next.id}
-              <ArrowRightIcon data-icon="inline-end" />
-            </Link>
-          </nav>
         </div>
 
         <Card ref={panel}>
