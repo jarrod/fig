@@ -1,5 +1,6 @@
 // Every design in gallery order: solids first, then line drawings.
-// Each module exports { id, kind, name, describe, draw } and optionally loopSeconds.
+// Each module exports { id, kind, name, describe, draw }, and optionally
+// loopSeconds and framed. To add a design, import it here and add it to the list.
 import plates from './plates.js';
 import towers from './towers.js';
 import terraces from './terraces.js';

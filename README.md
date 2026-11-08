@@ -40,7 +40,7 @@ Solid designs hide lines by filling each face with the background colour, so the
 <gen-card form="plates" seed="4821" detail="5" fig="0.3"></gen-card>
 ```
 
-Add `animate` to loop the drawing by moving its own seeded values, and `speed` (for example `0.5`) to slow it down or speed it up. Each design sets its own loop length for normal speed. Add `frame` (`fill`, `square`, `circle` or `hexagon`) to change the frame of a field design; other designs ignore it. Cards stay still for viewers who have reduced motion turned on.
+Add `animate` to loop the drawing by moving its own seeded values, and `speed` (for example `0.5`) to slow it down or speed it up. Each design sets its own loop length for normal speed. Add `frame` (`fill`, `square`, `circle` or `hexagon`) to change the frame of a field design; other designs ignore it. Cards stay still for viewers who have reduced motion turned on. Every card is the same size: the heading keeps to one line and the description to four (set `--gen-card-lines` to change it), with the full text in a tooltip.
 
 ## Layout
 

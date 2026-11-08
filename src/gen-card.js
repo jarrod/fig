@@ -2,14 +2,17 @@ import { DESIGN, DESIGNS } from './designs/index.js';
 import { HEIGHT, TAU, WIDTH, build, describeDesign, drawPaths, fitDesign, loopMs, updatePaths } from './core/render.js';
 
 const STYLE = `
-  :host { display: block; }
+  :host { display: block; height: 100%; }
   .card { background: #0e1011; border: 1px solid #26292b; border-radius: 12px; padding: 14px 16px 16px; height: 100%; box-sizing: border-box; }
   .meta { display: flex; justify-content: space-between; gap: 8px; font: 11px/1.4 ui-monospace, Menlo, monospace; color: #5e6367; }
   svg { display: block; width: 100%; margin: 2px 0 6px; }
   path { fill: #0e1011; stroke: #55595d; stroke-width: 0.7; stroke-linejoin: round; }
   path.line { fill: none; stroke-width: 0.5; }
-  h3 { margin: 0 0 4px; font: 500 14px system-ui, sans-serif; color: #d7dade; }
-  p { margin: 0; font: 400 13px/1.5 system-ui, sans-serif; color: #858a8f; }
+  h3 { margin: 0 0 4px; font: 500 14px system-ui, sans-serif; color: #d7dade; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Every card is the same size: the description stops after a set number of
+     lines (4 by default, or --gen-card-lines). The full text is in its title. */
+  p { margin: 0; font: 400 13px/1.5 system-ui, sans-serif; color: #858a8f; height: calc(1.5em * var(--gen-card-lines, 4));
+      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: var(--gen-card-lines, 4); overflow: hidden; }
   @media (prefers-reduced-motion: no-preference) { .still path { animation: in 0.35s both; } }
   @keyframes in { from { opacity: 0; } }
 `;
@@ -69,8 +72,8 @@ class GenCard extends HTMLElement {
         <svg class="${loop ? 'live' : 'still'}" viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" aria-label="${label}">${
           box ? drawPaths(faces, box, !loop) : ''
         }</svg>
-        <h3>${name}</h3>
-        <p>${body}</p>
+        <h3 title="${escapeHtml(name)}">${name}</h3>
+        <p title="${escapeHtml(body)}">${body}</p>
       </div>`;
     if (!loop || !box) return;
 
