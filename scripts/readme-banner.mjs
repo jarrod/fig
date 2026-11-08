@@ -70,7 +70,7 @@ function banner(theme) {
   const cx = dx + dw / 2;
   const cy = dy + dh / 2;
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Gen Cards: generative line drawings, exported as SVG">
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Fig: generative line drawings, exported as SVG">
 <style>
   .in { opacity: 0; animation: rise 1.1s cubic-bezier(.2,.7,.2,1) forwards; }
   .d1 { animation-delay: .05s } .d2 { animation-delay: .2s } .d3 { animation-delay: .35s } .d4 { animation-delay: .6s }
@@ -92,7 +92,7 @@ function banner(theme) {
 
 <g font-family="${SANS}">
   <text class="in d1" x="72" y="118" font-family="${MONO}" font-size="17" letter-spacing="3" fill="${t.muted}">GENERATIVE LINE DRAWINGS</text>
-  <text class="in d2" x="68" y="210" font-size="92" font-weight="600" letter-spacing="-3" fill="${t.text}">Gen Cards</text>
+  <text class="in d2" x="68" y="210" font-size="92" font-weight="600" letter-spacing="-3" fill="${t.text}">Fig</text>
   <text class="in d3" font-size="25" fill="${t.muted}">
     <tspan x="72" y="262">${DESIGNS.length} algorithms, each drawing its own seeded figure.</tspan>
     <tspan x="72" y="296">Export any of them as plain, animated SVG.</tspan>

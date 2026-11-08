@@ -1,9 +1,9 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="media/banner-dark.svg">
-  <img src="media/banner-light.svg" width="100%" alt="Gen Cards: generative line drawings, exported as SVG">
+  <img src="media/banner-light.svg" width="100%" alt="Fig: generative line drawings, exported as SVG">
 </picture>
 
-A collection of generative line drawings. Each design is made by one algorithm (Perlin noise, a Hilbert curve, a Lorenz attractor, reaction–diffusion and so on). Pick a design, change its seed and style, and export it as an SVG to use on your own site.
+Fig is a collection of generative line drawings. Each design is made by one algorithm (Perlin noise, a Hilbert curve, a Lorenz attractor, reaction–diffusion and so on). Pick a design, change its seed and style, and export it as an SVG to use on your own site.
 
 The same design, seed and detail always give the same drawing and the same text. Each card's heading names the algorithm, and its description is written from values measured from that drawing.
 

@@ -12,7 +12,7 @@ export function SiteBar({ children, className }) {
         className="-ml-1 inline-flex items-center gap-2 rounded-md px-1 py-1 text-sm font-semibold tracking-tight outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       >
         <LayersIcon aria-hidden="true" className="size-4 text-brand" />
-        Gen Cards
+        Fig
       </Link>
       {children}
     </div>

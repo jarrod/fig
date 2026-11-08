@@ -171,7 +171,7 @@ export default function Designer({ design, params }) {
 
   useEffect(() => writeUrl(design, s), [design, s]);
   useEffect(() => {
-    document.title = `${name} · Gen Cards`;
+    document.title = `${name} · Fig`;
   }, [name]);
 
   // Animate the preview by moving the existing paths each frame.

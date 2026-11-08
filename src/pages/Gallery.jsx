@@ -32,7 +32,7 @@ export default function Gallery() {
     });
 
   useEffect(() => {
-    document.title = 'Gen Cards';
+    document.title = 'Fig';
   }, []);
 
   return (
