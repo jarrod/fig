@@ -1,4 +1,5 @@
-import { project, makeNoise } from '../core/geometry.js';
+import { makeNoise } from '../core/geometry.js';
+import { makeFrame } from '../core/frame.js';
 import { pct } from '../core/text.js';
 
 const G = 40; // Density grid cells per side.
@@ -8,13 +9,16 @@ export default {
   kind: 'line',
   // Seconds per loop at normal speed, set from how fast it moves on screen.
   loopSeconds: 40,
+  // Samples a patch of ground, so it can be shown in any frame shape.
+  framed: true,
 
   describe: ({ strokes, relief, steepShare }) =>
     `Short strokes run across the slope of seeded noise terrain ${relief.toFixed(1)} units high, crowding where it is steep. Half of the ${strokes} strokes sit on the steepest ${pct(steepShare)}% of the ground.`,
 
   name: () => 'Slope hatching',
 
-  draw(out, R, detail, time = 0) {
+  draw(out, R, detail, time = 0, seed, frame = makeFrame()) {
+    const { w, h } = frame;
     const noise = makeNoise(R);
     const freq = 0.12 + R() * 0.1;
     const height = 3 + R() * 3;
@@ -38,13 +42,14 @@ export default {
     // to a point on the ground so that points crowd where the slope is steep.
     // The warp changes smoothly with the terrain, so every stroke glides
     // rather than jumps as the terrain moves.
-    const side = Math.round(Math.sqrt(300 + detail * 130));
+    const side = Math.round(Math.sqrt((300 + detail * 130) * frame.scale));
     const strokes = side * side;
     const pairs = [];
     for (let a = 0; a < side; a++) for (let b = 0; b < side; b++) pairs.push([(a + R()) / side, (b + R()) / side]);
 
     // Density per cell centre: a little everywhere, much more on steep ground.
-    const cell = 12 / G;
+    const cellX = w / G;
+    const cellY = h / G;
     const dens = new Float64Array((G + 1) * (G + 1));
     const steep = new Float64Array((G + 1) * (G + 1));
     let low = Infinity;
@@ -52,8 +57,8 @@ export default {
     let steepest = 1e-9;
     for (let j = 0; j <= G; j++) {
       for (let i = 0; i <= G; i++) {
-        const z = hgt(i * cell, j * cell);
-        const [gx, gy] = grad(i * cell, j * cell, z);
+        const z = hgt(i * cellX, j * cellY);
+        const [gx, gy] = grad(i * cellX, j * cellY, z);
         const s = Math.hypot(gx, gy);
         steep[j * (G + 1) + i] = s;
         steepest = Math.max(steepest, s);
@@ -124,8 +129,8 @@ export default {
       const d0 = dens[j * (G + 1) + lo] * (1 - ty) + dens[(j + 1) * (G + 1) + lo] * ty;
       const d1 = dens[j * (G + 1) + lo + 1] * (1 - ty) + dens[(j + 1) * (G + 1) + lo + 1] * ty;
       const tx = solve(d0, d1 - d0, mx - row(lo));
-      const x = (lo + tx) * cell;
-      const y = (j + ty) * cell;
+      const x = (lo + tx) * cellX;
+      const y = (j + ty) * cellY;
       count[Math.min(G - 1, j) * G + Math.min(G - 1, lo)]++;
 
       // The stroke follows the level line (across the gradient) both ways
@@ -138,8 +143,8 @@ export default {
       const a2 = stepAlong(...a1, -h);
       const b1 = stepAlong(...c, h);
       const b2 = stepAlong(...b1, h);
-      const p = [a2, a1, c, b1, b2].map(([px, py, pz]) => project(px, py, pz));
-      out.push({ g: Math.floor(s / side), r: false, open: true, p });
+      const p = [a2, a1, c, b1, b2].map(([px, py, pz]) => frame.to(px, py, pz));
+      frame.push(out, { g: Math.floor(s / side), r: false, open: true, p });
     });
 
     // How many strokes the steepest cells hold: the smallest share of the

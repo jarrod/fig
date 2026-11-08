@@ -7,18 +7,22 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { FramePicker } from '@/components/FramePicker';
 import { GenCard } from '@/components/GenCard';
+import { DEFAULT_FRAME } from '@/core/frame.js';
 import { DESIGNS } from '@/designs/index.js';
 import { Link } from '@/lib/router';
 
 const newSeeds = () => Object.fromEntries(DESIGNS.map((d) => [d.id, 1 + Math.floor(Math.random() * 9998)]));
 
 // Lives outside the component so it survives visits to design pages.
-let saved = { kind: 'all', detail: 5, animate: false, speed: 1, seeds: newSeeds() };
+let saved = { kind: 'all', detail: 5, animate: false, speed: 1, frame: DEFAULT_FRAME, seeds: newSeeds() };
 
 // Links carry the gallery's settings over to the design page.
-const hrefFor = (id, seed, s) =>
-  `?d=${id}&seed=${seed}&detail=${s.detail}${s.animate ? '&animate=1' : ''}${s.speed !== 1 ? `&speed=${s.speed}` : ''}`;
+const hrefFor = (design, seed, s) =>
+  `?d=${design.id}&seed=${seed}&detail=${s.detail}${s.animate ? '&animate=1' : ''}${s.speed !== 1 ? `&speed=${s.speed}` : ''}${
+    design.framed && s.frame !== DEFAULT_FRAME ? `&frame=${s.frame}` : ''
+  }`;
 
 export default function Gallery() {
   const [s, setS] = useState(saved);
@@ -89,6 +93,11 @@ export default function Gallery() {
           <span className="w-10 text-sm tabular-nums">{s.speed}×</span>
         </div>
 
+        <div className="flex items-center gap-3">
+          <Label id="frame-label">Frame</Label>
+          <FramePicker aria-labelledby="frame-label" value={s.frame} onChange={(frame) => set({ frame })} />
+        </div>
+
         <Button variant="outline" onClick={() => set({ seeds: newSeeds() })}>
           <ShuffleIcon data-icon="inline-start" />
           Shuffle
@@ -102,11 +111,11 @@ export default function Gallery() {
           return (
             <Link
               key={design.id}
-              href={hrefFor(design.id, seed, s)}
+              href={hrefFor(design, seed, s)}
               aria-label={`Open ${design.id}, seed ${seed}`}
               className="block rounded-xl outline-none transition hover:brightness-125 focus-visible:ring-3 focus-visible:ring-ring/50"
             >
-              <GenCard form={design.id} seed={seed} detail={s.detail} fig={`0.${i + 1}`} speed={s.speed} animate={s.animate} />
+              <GenCard form={design.id} seed={seed} detail={s.detail} fig={`0.${i + 1}`} speed={s.speed} animate={s.animate} frame={s.frame} />
             </Link>
           );
         })}

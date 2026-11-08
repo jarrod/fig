@@ -1,4 +1,4 @@
-import { project } from '../core/geometry.js';
+import { makeFrame } from '../core/frame.js';
 import { contourLines, isClosed } from '../core/marching.js';
 import { plural } from '../core/text.js';
 
@@ -18,18 +18,18 @@ const cache = new Map();
 
 // Gray–Scott: U is fed in and V eats it (U + 2V → 3V), while V decays. Both
 // diffuse, U twice as fast, on a grid that wraps around at the edges.
-function simulate(n, feed, kill, spots) {
-  let u = new Float32Array(n * n).fill(1);
-  let v = new Float32Array(n * n);
-  let u2 = new Float32Array(n * n);
-  let v2 = new Float32Array(n * n);
+function simulate(nx, ny, feed, kill, spots) {
+  let u = new Float32Array(nx * ny).fill(1);
+  let v = new Float32Array(nx * ny);
+  let u2 = new Float32Array(nx * ny);
+  let v2 = new Float32Array(nx * ny);
   for (const [sx, sy, r] of spots) {
-    const cx = Math.floor(sx * n);
-    const cy = Math.floor(sy * n);
+    const cx = Math.floor(sx * nx);
+    const cy = Math.floor(sy * ny);
     for (let dy = -r; dy <= r; dy++) {
       for (let dx = -r; dx <= r; dx++) {
         if (dx * dx + dy * dy > r * r) continue;
-        const i = ((cy + dy + n) % n) * n + ((cx + dx + n) % n);
+        const i = ((cy + dy + ny) % ny) * nx + ((cx + dx + nx) % nx);
         u[i] = 0.5;
         v[i] = 0.25;
       }
@@ -37,13 +37,13 @@ function simulate(n, feed, kill, spots) {
   }
   const fk = feed + kill;
   for (let t = 0; t < STEPS; t++) {
-    for (let y = 0; y < n; y++) {
-      const row = y * n;
-      const up = ((y + n - 1) % n) * n;
-      const down = ((y + 1) % n) * n;
-      for (let x = 0; x < n; x++) {
-        const l = x ? x - 1 : n - 1;
-        const r = x < n - 1 ? x + 1 : 0;
+    for (let y = 0; y < ny; y++) {
+      const row = y * nx;
+      const up = ((y + ny - 1) % ny) * nx;
+      const down = ((y + 1) % ny) * nx;
+      for (let x = 0; x < nx; x++) {
+        const l = x ? x - 1 : nx - 1;
+        const r = x < nx - 1 ? x + 1 : 0;
         const i = row + x;
         const U = u[i];
         const V = v[i];
@@ -63,6 +63,8 @@ export default {
   kind: 'line',
   // Seconds per loop at normal speed, set from how fast it moves on screen.
   loopSeconds: 15,
+  // Samples a patch of ground, so it can be shown in any frame shape.
+  framed: true,
 
   describe({ pattern, lines, levels, steps }) {
     const shape = { spots: 'separate spots', holes: 'a sheet with round holes', maze: 'winding stripes' }[pattern];
@@ -71,7 +73,8 @@ export default {
 
   name: () => 'Gray–Scott reaction–diffusion',
 
-  draw(out, R, detail, time = 0, seed) {
+  draw(out, R, detail, time = 0, seed, frame = makeFrame()) {
+    const { w, h } = frame;
     // Every random value is drawn first, the same way each frame, so the
     // cached field and the random sequence always agree.
     const [f0, k0] = FAMILIES[Math.floor(R() * FAMILIES.length)];
@@ -81,12 +84,15 @@ export default {
     const base = 0.35 + R() * 0.2;
     const swing = 0.08 + R() * 0.1;
     const spots = Array.from({ length: 8 + Math.floor(R() * 12) }, () => [R(), R(), 2 + Math.floor(R() * 3)]);
+    // Grid cells per side of the original 12-unit square, kept per unit here.
     const n = 62 + detail * 3;
+    const nx = Math.round((n * w) / 12);
+    const ny = Math.round((n * h) / 12);
 
-    const key = `${seed}/${detail}/${feed}/${kill}`;
+    const key = `${seed}/${detail}/${feed}/${kill}/${nx}x${ny}`;
     let entry = cache.get(key);
     if (!entry) {
-      const field = simulate(n, feed, kill, spots);
+      const field = simulate(nx, ny, feed, kill, spots);
       let min = Infinity;
       let max = -Infinity;
       for (const v of field) {
@@ -101,7 +107,8 @@ export default {
     const at = (frac) => min + (max - min) * frac;
 
     // The traced levels slide up and down together through the field.
-    const step = 12 / (n - 1);
+    const sx = w / (nx - 1);
+    const sy = h / (ny - 1);
     const shift = swing * Math.sin(time);
     let lines = 0;
     let closed = 0;
@@ -110,11 +117,11 @@ export default {
     for (const v of field) if (v >= mid) above++;
     for (let l = 0; l < levels; l++) {
       const level = at(base + shift + (l - (levels - 1) / 2) * 0.12);
-      for (const line of contourLines(field, n, n, level)) {
+      for (const line of contourLines(field, nx, ny, level)) {
         if (line.length < 3) continue;
         lines++;
         if (isClosed(line)) closed++;
-        out.push({ g: l, r: false, open: true, p: line.map(([x, y]) => project(x * step, y * step, 0)) });
+        frame.push(out, { g: l, r: false, open: true, p: line.map(([x, y]) => frame.to(x * sx, y * sy, 0)) });
       }
     }
 

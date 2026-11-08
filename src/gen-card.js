@@ -19,7 +19,7 @@ const escapeHtml = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
 class GenCard extends HTMLElement {
-  static observedAttributes = ['form', 'seed', 'detail', 'fig', 'animate', 'speed'];
+  static observedAttributes = ['form', 'seed', 'detail', 'fig', 'animate', 'speed', 'frame'];
 
   #frame = 0;
   #visible = true;
@@ -52,12 +52,14 @@ class GenCard extends HTMLElement {
     const fig = escapeHtml(this.getAttribute('fig') ?? '0.1');
     const loop = this.hasAttribute('animate') && !reducedMotion.matches;
     const loopLength = loopMs(design, Number(this.getAttribute('speed')) || 1);
+    // Only field designs use the frame; the rest ignore it.
+    const frame = this.getAttribute('frame') ?? undefined;
 
-    const { faces, facts } = build(design, seed, detail, 0);
+    const { faces, facts } = build(design, seed, detail, 0, frame);
     // The heading is the algorithm's name; the description is measured from the drawing.
     const name = design.name(facts);
     const body = describeDesign(design, facts, faces.length);
-    const box = faces.length ? fitDesign(design, seed, detail, loop) : null;
+    const box = faces.length ? fitDesign(design, seed, detail, loop, frame) : null;
     const label = `${name} drawing, seed ${seed}${loop ? ', animated' : ''}`;
 
     this.shadowRoot.innerHTML = `
@@ -75,7 +77,7 @@ class GenCard extends HTMLElement {
     // All cards share one clock, so they move in step and a re-render never jumps.
     const svg = this.shadowRoot.querySelector('svg');
     const tick = (now) => {
-      if (this.#visible) updatePaths(svg, build(design, seed, detail, ((now % loopLength) / loopLength) * TAU).faces, box);
+      if (this.#visible) updatePaths(svg, build(design, seed, detail, ((now % loopLength) / loopLength) * TAU, frame).faces, box);
       this.#frame = requestAnimationFrame(tick);
     };
     this.#frame = requestAnimationFrame(tick);

@@ -20,9 +20,16 @@ The site runs at http://localhost:5174. It's built with React, Tailwind CSS v4 a
 
 ## The site
 
-- **Gallery** (`/`): every design as a live card, with filters for solids and line drawings, detail, animation, speed and shuffle.
-- **Design page** (`/?d=flows&seed=6470&detail=5`): a large preview with seed, detail, animation, speed, line colour, background, transparency and line width. Every setting is kept in the URL, so links can be shared.
+- **Gallery** (`/`): every design as a live card, with filters for solids and line drawings, detail, frame, animation, speed and shuffle.
+- **Design page** (`/?d=flows&seed=6470&detail=5`): a large preview with seed, frame, detail, animation, speed, line colour, background, transparency and line width. Every setting is kept in the URL, so links can be shared.
 - **Export**: download an SVG, copy its code, or download an animated SVG that loops on its own with SMIL (no script). Animated files morph each shape smoothly when every frame has the same shapes, and otherwise swap whole frames.
+
+**Frames.** Four designs sample a patch of ground rather than drawing one free shape: Perlin flow field, Wave interference, Gray–Scott reaction–diffusion and Slope hatching. Their frame can be:
+- **Diamond**: the isometric view of a square of ground, the default.
+- **Fill**: seen from above, edge to edge across the whole card.
+- **Square**, **Circle** or **Hexagon**: seen from above. The field is sampled over the whole shape and every line is clipped to it, so the field fills the shape rather than being cut from the diamond.
+
+The other designs keep their own outline.
 
 Solid designs hide lines by filling each face with the background colour, so their faces stay filled even when the background is transparent.
 
@@ -42,5 +49,7 @@ Add `animate` to loop the drawing by moving its own seeded values, and `speed` (
 - `src/core/render.js` fits a drawing to the frame, turns faces into SVG paths, and builds the exported files.
 - `src/gen-card.js` defines the `<gen-card>` element. It has no React or other dependencies, so it works on any page.
 - `src/App.jsx`, `src/pages/Gallery.jsx` and `src/pages/Designer.jsx` are the site, with a small query-string router in `src/lib/router.jsx`. `src/components/GenCard.jsx` wraps the element for React, setting its attributes directly, because React would otherwise assign `animate` as a property and replace the element's built-in `animate()` method.
+
+A field design sets `framed: true` and gets a sixth argument, `frame` (from `src/core/frame.js`). It samples ground over `0..frame.w` by `0..frame.h`, turns ground points into drawing points with `frame.to(x, y, z)`, and adds lines with `frame.push(out, face)`, which clips them to the shape. `frame.scale` is the patch's area against the original 12 × 12 square, for keeping the same density of lines.
 
 A design's `draw(out, R, detail, time, seed)` pushes faces into `out` and returns the facts its text needs. All randomness comes from `R`, called the same number of times at every `time`. `time` is in radians: 0 is the still drawing, and every motion repeats exactly every 2π. Solid faces must be pushed back to front, because each one is painted over the last to hide the lines behind it. Open lines (`open: true`) have no fill and can go in any order.

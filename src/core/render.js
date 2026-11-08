@@ -1,9 +1,9 @@
 // Turns a design's faces into SVG: for the live cards, and as standalone files
 // for export. No design-specific code lives here.
 import { rng } from './geometry.js';
+import { HEIGHT, WIDTH, makeFrame } from './frame.js';
 
-export const WIDTH = 320;
-export const HEIGHT = 270;
+export { HEIGHT, WIDTH };
 // A loop lasts the design's own loopSeconds (10 by default) divided by speed.
 export const loopMs = (design, speed = 1) => ((design.loopSeconds ?? 10) * 1000) / (speed || 1);
 export const TAU = Math.PI * 2;
@@ -12,11 +12,16 @@ const CORNER = 2.2;
 const FIT_SAMPLES = 48;
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-export function build(design, seed, detail, time = 0) {
+// Field designs (design.framed) also get a frame: the shape of ground they
+// sample and how it is shown. Other designs ignore the frame setting.
+export const frameFor = (design, frameId) => (design.framed ? makeFrame(frameId) : null);
+
+export function build(design, seed, detail, time = 0, frameId) {
   const faces = [];
+  const frame = frameFor(design, frameId);
   // The seed is passed too, for designs that cache a slow simulation per seed.
-  const facts = design.draw(faces, rng(seed), detail, time, seed);
-  return { faces, facts };
+  const facts = design.draw(faces, rng(seed), detail, time, seed, frame);
+  return { faces, facts, frame };
 }
 
 // The card text always describes the still drawing (time 0).
@@ -44,13 +49,15 @@ export function facePath(points, rounded, open) {
 }
 
 // Scale and offset that fit every given frame in the frame, so a looping
-// drawing keeps one size instead of zooming as its outline changes.
-export function fit(frames) {
+// drawing keeps one size instead of zooming as its outline changes. A shaped
+// frame fits its own outline instead, and Fill runs to the edges.
+export function fit(frames, frame) {
   let minX = Infinity;
   let maxX = -Infinity;
   let minY = Infinity;
   let maxY = -Infinity;
-  for (const faces of frames) {
+  if (frame?.bounds) [minX, minY, maxX, maxY] = frame.bounds;
+  else for (const faces of frames) {
     for (const f of faces) {
       for (const [x, y] of f.p) {
         minX = Math.min(minX, x);
@@ -61,15 +68,18 @@ export function fit(frames) {
     }
   }
   if (minX === Infinity) return null;
-  const k = Math.min((WIDTH - PAD * 2) / (maxX - minX || 1), (HEIGHT - PAD * 2) / (maxY - minY || 1));
+  const pad = frame?.bleed ? 0 : PAD;
+  const k = Math.min((WIDTH - pad * 2) / (maxX - minX || 1), (HEIGHT - pad * 2) / (maxY - minY || 1));
   return { k, ox: (WIDTH - (maxX - minX) * k) / 2 - minX * k, oy: (HEIGHT - (maxY - minY) * k) / 2 - minY * k };
 }
 
 // The fit for a still drawing, or for every point in the loop when animated.
-export function fitDesign(design, seed, detail, loop) {
+export function fitDesign(design, seed, detail, loop, frameId) {
+  const frame = frameFor(design, frameId);
+  if (frame?.bounds) return fit([], frame);
   const frames = loop
-    ? Array.from({ length: FIT_SAMPLES }, (_, i) => build(design, seed, detail, (i / FIT_SAMPLES) * TAU).faces)
-    : [build(design, seed, detail, 0).faces];
+    ? Array.from({ length: FIT_SAMPLES }, (_, i) => build(design, seed, detail, (i / FIT_SAMPLES) * TAU, frameId).faces)
+    : [build(design, seed, detail, 0, frameId).faces];
   return fit(frames);
 }
 
@@ -123,9 +133,9 @@ function svgOpen(style, label) {
 
 const lineAttrs = (f, style) => (f.open ? ` fill="none" stroke-width="${((Number(style.width) || 0.7) * 0.72).toFixed(2)}"` : '');
 
-export function exportSvg(design, seed, detail, style = DEFAULT_STYLE) {
-  const { faces, facts } = build(design, seed, detail, 0);
-  const box = fit([faces]);
+export function exportSvg(design, seed, detail, style = DEFAULT_STYLE, frameId) {
+  const { faces, facts, frame } = build(design, seed, detail, 0, frameId);
+  const box = fit([faces], frame);
   const label = `${design.name(facts)}, seed ${seed}`;
   const paths = box ? faces.map((f) => `<path${lineAttrs(f, style)} d="${pathData(f, box)}"/>`).join('\n') : '';
   return `${svgOpen(style, label)}\n${paths}\n</g></svg>\n`;
@@ -135,14 +145,14 @@ export function exportSvg(design, seed, detail, style = DEFAULT_STYLE) {
 // frame has the same faces with the same shape of path, each path morphs
 // smoothly between frames. Otherwise (cubes appearing and disappearing, say)
 // whole frames are swapped in turn, which is larger and steps rather than glides.
-export function exportAnimatedSvg(design, seed, detail, style = DEFAULT_STYLE, { frames = 30, swapFrames = 24, speed = 1 } = {}) {
-  const { facts } = build(design, seed, detail, 0);
-  const box = fitDesign(design, seed, detail, true);
+export function exportAnimatedSvg(design, seed, detail, style = DEFAULT_STYLE, { frames = 30, swapFrames = 24, speed = 1, frame: frameId } = {}) {
+  const { facts } = build(design, seed, detail, 0, frameId);
+  const box = fitDesign(design, seed, detail, true, frameId);
   const label = `${design.name(facts)}, seed ${seed}, animated`;
   const dur = `${+(loopMs(design, speed) / 1000).toFixed(2)}s`;
   const shapeOf = (d) => d.replace(/-?[\d.]+/g, '#');
   const sample = (count) =>
-    Array.from({ length: count }, (_, i) => build(design, seed, detail, (i / count) * TAU).faces.map((f) => ({ f, d: pathData(f, box) })));
+    Array.from({ length: count }, (_, i) => build(design, seed, detail, (i / count) * TAU, frameId).faces.map((f) => ({ f, d: pathData(f, box) })));
 
   const morphFrames = sample(frames);
   const first = morphFrames[0];

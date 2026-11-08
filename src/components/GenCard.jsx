@@ -4,16 +4,16 @@
 // `animate` would replace that method instead of setting the attribute.
 import { useLayoutEffect, useRef } from 'react';
 
-export function GenCard({ form, seed, detail, fig, speed, animate }) {
+export function GenCard({ form, seed, detail, fig, speed, animate, frame }) {
   const ref = useRef(null);
   useLayoutEffect(() => {
     const card = ref.current;
-    const attributes = { form, seed, detail, fig, speed };
+    const attributes = { form, seed, detail, fig, speed, frame };
     for (const [name, value] of Object.entries(attributes)) {
       if (value === undefined) card.removeAttribute(name);
       else if (card.getAttribute(name) !== String(value)) card.setAttribute(name, value);
     }
     card.toggleAttribute('animate', Boolean(animate));
-  }, [form, seed, detail, fig, speed, animate]);
+  }, [form, seed, detail, fig, speed, animate, frame]);
   return <gen-card ref={ref} />;
 }

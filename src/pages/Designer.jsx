@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
+import { FramePicker } from '@/components/FramePicker';
+import { DEFAULT_FRAME, isFrame } from '@/core/frame.js';
 import { cn } from '@/lib/utils';
 import { DESIGNS } from '@/designs/index.js';
 import { Link } from '@/lib/router';
@@ -37,6 +39,7 @@ function readSettings(params) {
     seed: Math.round(clamp(num('seed'), 1, 99999, randomSeed())),
     detail: Math.round(clamp(num('detail'), 1, 10, 5)),
     animate: params.get('animate') === '1',
+    frame: isFrame(params.get('frame')) ? params.get('frame') : DEFAULT_FRAME,
     speed: clamp(num('speed'), 0.25, 2, 1),
     style: {
       line: isColour(params.get('line')) ? params.get('line') : DEFAULT_STYLE.line,
@@ -51,6 +54,7 @@ function writeUrl(design, s) {
   const params = new URLSearchParams({ d: design.id, seed: s.seed, detail: s.detail });
   if (s.animate) params.set('animate', '1');
   if (s.speed !== 1) params.set('speed', s.speed);
+  if (design.framed && s.frame !== DEFAULT_FRAME) params.set('frame', s.frame);
   if (s.style.line !== DEFAULT_STYLE.line) params.set('line', s.style.line);
   if (s.style.background !== DEFAULT_STYLE.background) params.set('bg', s.style.background);
   if (s.style.transparent) params.set('t', '1');
@@ -132,10 +136,13 @@ export default function Designer({ design, params }) {
   const next = DESIGNS[(index + 1) % DESIGNS.length];
 
   const { name, description, faceCount } = useMemo(() => {
-    const { faces, facts } = build(design, s.seed, s.detail, 0);
+    const { faces, facts } = build(design, s.seed, s.detail, 0, s.frame);
     return { name: design.name(facts), description: describeDesign(design, facts, faces.length), faceCount: faces.length };
-  }, [design, s.seed, s.detail]);
-  const svg = useMemo(() => exportSvg(design, s.seed, s.detail, s.style), [design, s.seed, s.detail, s.style]);
+  }, [design, s.seed, s.detail, s.frame]);
+  const svg = useMemo(
+    () => exportSvg(design, s.seed, s.detail, s.style, s.frame),
+    [design, s.seed, s.detail, s.style, s.frame],
+  );
   const loopLength = loopMs(design, s.speed);
 
   useEffect(() => writeUrl(design, s), [design, s]);
@@ -147,19 +154,20 @@ export default function Designer({ design, params }) {
   useEffect(() => {
     const group = preview.current?.querySelector('svg > g');
     if (!s.animate || reducedMotion.matches || !group || !faceCount) return;
-    const box = fitDesign(design, s.seed, s.detail, true);
+    const box = fitDesign(design, s.seed, s.detail, true, s.frame);
     const lineWidth = (s.style.width * 0.72).toFixed(2);
     let frame = 0;
     const tick = (now) => {
-      updatePaths(group, build(design, s.seed, s.detail, ((now % loopLength) / loopLength) * TAU).faces, box);
+      updatePaths(group, build(design, s.seed, s.detail, ((now % loopLength) / loopLength) * TAU, s.frame).faces, box);
       for (const path of group.querySelectorAll('path.line')) path.setAttribute('stroke-width', lineWidth);
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [design, s.seed, s.detail, s.animate, s.style.width, svg, faceCount, loopLength]);
+  }, [design, s.seed, s.detail, s.frame, s.animate, s.style.width, svg, faceCount, loopLength]);
 
-  const filename = (suffix = '') => `${design.id}-${s.seed}${suffix}.svg`;
+  const frameTag = design.framed && s.frame !== DEFAULT_FRAME ? `-${s.frame}` : '';
+  const filename = (suffix = '') => `${design.id}-${s.seed}${frameTag}${suffix}.svg`;
 
   const downloadStill = () => {
     download(svg, filename());
@@ -179,7 +187,7 @@ export default function Designer({ design, params }) {
     setBuilding(true);
     // Let the button repaint before the (sometimes slow) build.
     setTimeout(() => {
-      const { svg: animated, mode } = exportAnimatedSvg(design, s.seed, s.detail, s.style, { speed: s.speed });
+      const { svg: animated, mode } = exportAnimatedSvg(design, s.seed, s.detail, s.style, { speed: s.speed, frame: s.frame });
       download(animated, filename('-animated'));
       toast.success(`Downloaded ${filename('-animated')}`, {
         description: `${size(animated)}, loops every ${seconds(loopLength)}. ${
@@ -249,6 +257,20 @@ export default function Designer({ design, params }) {
                   </Button>
                 </div>
               </Row>
+              <Row label="Frame" id="frame-label">
+                <FramePicker
+                  aria-labelledby="frame-label"
+                  value={design.framed ? s.frame : DEFAULT_FRAME}
+                  onChange={(frame) => set({ frame })}
+                  disabled={!design.framed}
+                />
+              </Row>
+              {!design.framed && (
+                <p className="text-xs text-muted-foreground">
+                  This design draws one free shape, so it keeps its own outline. Frames apply to designs that sample a
+                  patch of ground.
+                </p>
+              )}
               <SliderRow label="Detail" value={s.detail} min={1} max={10} step={1} onChange={(detail) => set({ detail })} />
               <Row label="Animate" htmlFor="animate">
                 <Switch id="animate" checked={s.animate} onCheckedChange={(animate) => set({ animate })} />
