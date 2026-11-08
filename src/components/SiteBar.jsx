@@ -1,14 +1,32 @@
 // The slim bar at the top of every page: the site's wordmark, linking home,
 // and room on the right for something of the page's own.
+import { DESIGN } from '@/designs/index.js';
+import { drawingBounds, exportSvg } from '@/core/render.js';
 import { Link } from '@/lib/router';
 import { cn } from '@/lib/utils';
 
-// Three stacked lines, as in the drawings, in the accent colour.
+// The logo: a tiny Power curve, the collection's first design, cropped to
+// its plates and drawn in the accent colour with hairline lines. Its plates
+// are filled with the page's background, so they hide the lines behind them.
+const LOGO = { form: 'plates', seed: 1, detail: 1 };
+const logoView = drawingBounds(DESIGN[LOGO.form], LOGO.seed, LOGO.detail);
+const logo = exportSvg(DESIGN[LOGO.form], LOGO.seed, LOGO.detail, {
+  line: 'currentColor',
+  background: 'transparent',
+  transparent: true,
+  width: 1,
+})
+  .replace(/viewBox="[^"]*"/, `viewBox="${logoView.join(' ')}"`)
+  .replace(/ width="320" height="270"/, '')
+  .replace(/ role="img" aria-label="[^"]*"/, ' aria-hidden="true"');
+
 function Mark() {
   return (
-    <svg viewBox="0 0 16 16" aria-hidden="true" className="size-4 text-brand">
-      <path d="M2 5l6 3 6-3M2 8l6 3 6-3M2 11l6 3 6-3" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <span
+      className="block h-6 text-brand [&_g]:fill-background [&_path]:[vector-effect:non-scaling-stroke] [&_svg]:h-full [&_svg]:w-auto"
+      style={{ aspectRatio: `${logoView[2]} / ${logoView[3]}` }}
+      dangerouslySetInnerHTML={{ __html: logo }}
+    />
   );
 }
 

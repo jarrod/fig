@@ -4,7 +4,7 @@
 import { useEffect, useRef } from 'react';
 import { SiteBar } from '@/components/SiteBar';
 import { DESIGN, DESIGNS } from '@/designs/index.js';
-import { TAU, build, exportAnimatedSvg, exportSvg, fitDesign } from '@/core/render.js';
+import { drawingBounds, exportAnimatedSvg, exportSvg } from '@/core/render.js';
 
 const DRAWING = { form: 'damped', seed: 3901, detail: 5, speed: 0.5 };
 const STYLE = { line: '#d317b1', background: '#08090a', transparent: true, width: 1 };
@@ -18,25 +18,9 @@ const still = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-
 const design = DESIGN[DRAWING.form];
 // Its figure number in the collection, as on its card.
 const fig = `0.${DESIGNS.indexOf(design) + 1}`;
-// The part of the export's 320 × 270 frame the drawing covers over its
-// whole loop, so the SVG can be cropped to it and its label sit close by.
-function outline() {
-  const { seed, detail } = DRAWING;
-  const box = fitDesign(design, seed, detail, true);
-  let [x0, y0, x1, y1] = [Infinity, Infinity, -Infinity, -Infinity];
-  for (let i = 0; i < 24; i++) {
-    for (const f of build(design, seed, detail, (i / 24) * TAU).faces) {
-      for (const [x, y] of f.p) {
-        const X = x * box.k + box.ox;
-        const Y = y * box.k + box.oy;
-        [x0, y0, x1, y1] = [Math.min(x0, X), Math.min(y0, Y), Math.max(x1, X), Math.max(y1, Y)];
-      }
-    }
-  }
-  const m = 2; // Room for the line width.
-  return [x0 - m, y0 - m, x1 - x0 + 2 * m, y1 - y0 + 2 * m].map((v) => +v.toFixed(1));
-}
-const view = outline();
+// Cropped to the area the drawing covers over its loop, so its label sits
+// close by.
+const view = drawingBounds(design, DRAWING.seed, DRAWING.detail, true);
 
 const drawing = (
   still
@@ -71,7 +55,8 @@ export function Hero() {
       />
 
       {/* Text on the left, the drawing on the right; stacked on phones. */}
-      <SiteBar className="relative mx-auto max-w-6xl px-4 pt-2" />
+      {/* The logo's plates are filled with the hero's own background. */}
+      <SiteBar className="relative mx-auto max-w-6xl px-4 pt-2 [--background:#08090a]" />
 
       <div className="relative mx-auto grid max-w-6xl items-center gap-x-12 gap-y-4 px-4 pt-4 pb-12 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:pt-0 md:pb-16">
         <div>

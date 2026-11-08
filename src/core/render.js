@@ -194,3 +194,23 @@ export function exportAnimatedSvg(design, seed, detail, style = DEFAULT_STYLE, {
   });
   return { svg: `${svgOpen(style, label)}\n${groups.join('\n')}\n</g></svg>\n`, mode: 'frames' };
 }
+
+// The part of the export's 320 × 270 frame a drawing covers, at time 0 or,
+// with `loop`, at any point in its loop: [x, y, width, height], with room
+// for the line width. Used to crop an export tightly to the drawing.
+export function drawingBounds(design, seed, detail, loop = false, frameId) {
+  const box = fitDesign(design, seed, detail, loop, frameId);
+  if (!box) return [0, 0, WIDTH, HEIGHT];
+  let [x0, y0, x1, y1] = [Infinity, Infinity, -Infinity, -Infinity];
+  for (let i = 0; i < (loop ? 24 : 1); i++) {
+    for (const f of build(design, seed, detail, (i / 24) * TAU, frameId).faces) {
+      for (const [x, y] of f.p) {
+        const X = x * box.k + box.ox;
+        const Y = y * box.k + box.oy;
+        [x0, y0, x1, y1] = [Math.min(x0, X), Math.min(y0, Y), Math.max(x1, X), Math.max(y1, Y)];
+      }
+    }
+  }
+  const m = 2;
+  return [x0 - m, y0 - m, x1 - x0 + 2 * m, y1 - y0 + 2 * m].map((v) => +v.toFixed(1));
+}
