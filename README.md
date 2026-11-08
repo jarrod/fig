@@ -1,5 +1,10 @@
 # Gen Cards
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="media/contours-dark.svg">
+  <img src="media/contours-light.svg" width="480" alt="Animated Perlin contours, seed 6470">
+</picture>
+
 A collection of generative line drawings. Each design is made by one algorithm (Perlin noise, a Hilbert curve, a Lorenz attractor, reaction–diffusion and so on). Pick a design, change its seed and style, and export it as an SVG to use on your own site.
 
 The same design, seed and detail always give the same drawing and the same text. Each card's heading names the algorithm, and its description is written from values measured from that drawing.
