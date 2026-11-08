@@ -30,6 +30,14 @@ import branches from './branches.js';
 import waves from './waves.js';
 import turing from './turing.js';
 import hatching from './hatching.js';
+import chladni from './chladni.js';
+import marble from './marble.js';
+import phyllotaxis from './phyllotaxis.js';
+import maurer from './maurer.js';
+import lsystem from './lsystem.js';
+import epicycles from './epicycles.js';
+import penrose from './penrose.js';
+import truchet from './truchet.js';
 
 export const DESIGNS = [
   plates,
@@ -61,6 +69,14 @@ export const DESIGNS = [
   waves,
   turing,
   hatching,
+  chladni,
+  marble,
+  phyllotaxis,
+  maurer,
+  lsystem,
+  epicycles,
+  penrose,
+  truchet,
 ];
 
 export const DESIGN = Object.fromEntries(DESIGNS.map((d) => [d.id, d]));

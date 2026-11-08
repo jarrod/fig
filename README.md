@@ -24,7 +24,7 @@ The site runs at http://localhost:5174. It's built with React, Tailwind CSS v4 a
 - **Design page** (`/?d=flows&seed=6470&detail=5`): a large preview with seed, frame, detail, animation, speed, line colour, background, transparency and line width. Every setting is kept in the URL, so links can be shared.
 - **Export**: download an SVG, copy its code, or download an animated SVG that loops on its own with SMIL (no script). Animated files morph each shape smoothly when every frame has the same shapes, and otherwise swap whole frames.
 
-**Frames.** Four designs sample a patch of ground rather than drawing one free shape: Perlin flow field, Wave interference, Gray–Scott reaction–diffusion and Slope hatching. Their frame can be:
+**Frames.** Eight designs sample a patch of ground rather than drawing one free shape: Perlin flow field, Wave interference, Gray–Scott reaction–diffusion, Slope hatching, Chladni figure, Domain-warped noise, Penrose tiling and Truchet tiles. Their frame can be:
 - **Diamond**: the isometric view of a square of ground, the default.
 - **Fill**: seen from above, edge to edge across the whole card.
 - **Square**, **Circle** or **Hexagon**: seen from above. The field is sampled over the whole shape and every line is clipped to it, so the field fills the shape rather than being cut from the diamond.
@@ -44,7 +44,8 @@ Add `animate` to loop the drawing by moving its own seeded values, and `speed` (
 
 ## Layout
 
-- `src/designs/` holds one file per design. Each exports `{ id, kind, name, describe, draw }`, and optionally `loopSeconds`. To add a design, add a file and list it in `src/designs/index.js`.
+- `src/designs/` holds one file per design. Each exports `{ id, kind, name, describe, draw }`, and optionally `loopSeconds` and `framed`. To add a design, add a file and list it in `src/designs/index.js`.
+- `scripts/check-design.mjs` checks a design against the rules below: it draws the same thing every time, loops without a seam, moves smoothly, is fast enough to animate, varies its text from seed to seed, and exports cleanly. `node scripts/check-design.mjs src/designs/<name>.js --sheet sheet.png` also renders a contact sheet of seeds with headless Chrome, and `--frame circle` checks a frame shape.
 - `src/core/geometry.js` has the shared geometry: isometric projection, the seeded random generator, boxes, prisms, noise and more. `src/core/marching.js` traces contour lines. `src/core/text.js` has small helpers for descriptions.
 - `src/core/render.js` fits a drawing to the frame, turns faces into SVG paths, and builds the exported files.
 - `src/gen-card.js` defines the `<gen-card>` element. It has no React or other dependencies, so it works on any page.
