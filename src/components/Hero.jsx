@@ -69,14 +69,9 @@ export function Hero({ count, stageHref, stageFig, surpriseHref, onSurprise }) {
       </div>
 
       <div className="relative mx-auto flex max-w-6xl flex-col items-center px-4 pt-16 text-center md:pt-20">
-        <p className="hero-rise inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-white/60 backdrop-blur">
-          <span className="size-1.5 rounded-full bg-white/70" />
-          {count} generative designs
-        </p>
-
         <h1
           id="hero-title"
-          className="hero-rise mt-6 text-[clamp(2.75rem,7vw,5.25rem)] leading-[0.95] font-semibold tracking-[-0.045em] [--d:80ms]"
+          className="hero-rise text-[clamp(2.75rem,7vw,5.25rem)] leading-[0.95] font-semibold tracking-[-0.045em] [--d:80ms]"
         >
           Mathematics,{' '}
           <span className="block bg-gradient-to-b from-white/70 to-white/25 bg-clip-text text-transparent">drawn in line.</span>
