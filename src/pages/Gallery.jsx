@@ -21,12 +21,9 @@ let saved = Object.fromEntries(DESIGNS.map((d) => [d.id, randomSeed()]));
 // Links carry the seed, and the frame for field designs, over to the design page.
 const hrefFor = (design, seed) => `?d=${design.id}&seed=${seed}&detail=${DETAIL}${design.framed ? `&frame=${FRAME}` : ''}`;
 
-// Any design at any seed, for the hero's "Surprise me".
-const surprise = () => hrefFor(DESIGNS[Math.floor(Math.random() * DESIGNS.length)], randomSeed());
 
 export default function Gallery() {
   const [seeds, setSeeds] = useState(saved);
-  const [surpriseHref, setSurpriseHref] = useState(surprise);
   const reshuffle = (id) =>
     setSeeds((prev) => {
       let seed = randomSeed();
@@ -40,20 +37,11 @@ export default function Gallery() {
 
   return (
     <>
-      <Hero
-        surpriseHref={surpriseHref}
-        // A fresh pick for next time, once this one has been followed.
-        onSurprise={() => setTimeout(() => setSurpriseHref(surprise()), 0)}
-      />
+      <Hero />
 
-      <header id="collection" className="mt-10 mb-6 flex scroll-mt-6 flex-wrap items-end justify-between gap-x-8 gap-y-2">
-        <div>
-          <h2 className="font-heading text-2xl font-semibold tracking-tight">The collection</h2>
-          <p className="mt-1 max-w-[62ch] text-muted-foreground">
-            Hover a card to see it move, or open it to change its seed and style, then export it as an SVG for your
-            own site.
-          </p>
-        </div>
+      {/* The heading is for screen readers only. */}
+      <header className="mt-10 mb-3 flex justify-end">
+        <h2 className="sr-only">The collection</h2>
         <p className="font-mono text-xs text-muted-foreground">{DESIGNS.length} designs</p>
       </header>
 

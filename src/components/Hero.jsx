@@ -1,16 +1,7 @@
-// The home page's hero: the headline, a line of copy and two calls to
-// action on a dark, softly lit stage.
-import { ArrowDownIcon, ArrowRightIcon } from 'lucide-react';
-import { Link } from '@/lib/router';
+// The home page's hero: the headline and a line of copy on a dark, softly
+// lit stage.
 
-const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-export function Hero({ surpriseHref, onSurprise }) {
-  const browse = (event) => {
-    event.preventDefault();
-    document.getElementById('collection')?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth' });
-  };
-
+export function Hero() {
   return (
     <section
       aria-labelledby="hero-title"
@@ -43,29 +34,10 @@ export function Hero({ surpriseHref, onSurprise }) {
           <span className="block bg-gradient-to-b from-white/70 to-white/25 bg-clip-text text-transparent">drawn in line.</span>
         </h1>
 
-        <p className="hero-rise mt-5 max-w-[46ch] text-base leading-relaxed text-pretty text-white/55 [--d:160ms] md:text-lg">
+        <p className="hero-rise mt-5 mb-24 max-w-[46ch] text-base leading-relaxed text-pretty text-white/55 [--d:160ms] md:text-lg">
           Minimal surfaces, strange attractors, fractals and fields, each grown from a seed. Find one you love and take
           it home as a single SVG that moves on its own.
         </p>
-
-        <div className="hero-rise mt-8 mb-24 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 [--d:240ms]">
-          <a
-            href="#collection"
-            onClick={browse}
-            className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-6 text-sm font-medium text-black transition hover:bg-white/85 focus-visible:ring-4 focus-visible:ring-white/30 focus-visible:outline-none"
-          >
-            Browse the collection
-            <ArrowDownIcon className="size-4" />
-          </a>
-          <Link
-            href={surpriseHref}
-            onClick={onSurprise}
-            className="group inline-flex h-11 items-center gap-1.5 rounded-full px-2 text-sm font-medium text-white/75 transition hover:text-white focus-visible:ring-4 focus-visible:ring-white/30 focus-visible:outline-none"
-          >
-            Surprise me
-            <ArrowRightIcon className="size-4 transition-transform group-hover:translate-x-0.5" />
-          </Link>
-        </div>
 
       </div>
 
