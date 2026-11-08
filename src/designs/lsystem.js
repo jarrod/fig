@@ -69,126 +69,143 @@ const times = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : `${n} times`);
 const fmt = (n) => n.toLocaleString('en-US');
 const deg = (a) => `${+a.toFixed(1)}°`;
 
-export default {
-  id: 'lsystem',
-  kind: 'line',
-  // Seconds per loop at normal speed. The wave passes through the classic
-  // shape twice per loop, so each half is 20 seconds.
-  loopSeconds: 40,
+// One design per pool of systems: the fractal curves card picks among the
+// curves and plants by seed, and the Koch snowflake has a card of its own.
+function lsystemDesign(id, pool) {
+  const curves = pool.filter((n) => !SYSTEMS[n].plant);
+  const plants = pool.filter((n) => SYSTEMS[n].plant);
+  return {
+    id,
+    kind: 'line',
+    // Seconds per loop at normal speed. The wave passes through the classic
+    // shape twice per loop, so each half is 20 seconds.
+    loopSeconds: 40,
 
-  describe({ noun, depth, segments, low, high, inward, aspect, plant, branches, outward }) {
-    const shape = aspect > 1.15 ? `${aspect.toFixed(1)} times as wide as it is tall` : aspect < 1 / 1.15 ? `${(1 / aspect).toFixed(1)} times as tall as it is wide` : 'about as wide as it is tall';
-    if (plant) {
-      return `A plant rule rewritten ${times(depth)} into ${fmt(segments)} segments over ${fmt(branches)} branches. Each generation of forks swings between ${deg(low)} and ${deg(high)}, in a wave running ${outward ? 'from the trunk out to the twigs' : 'from the twigs in to the trunk'}, and it stands ${shape}.`;
-    }
-    const order = outward ? 'from the largest bends down to the finest' : 'from the finest bends up to the largest';
-    const fold = inward ? ', folding its spikes inward past flat and out again' : '';
-    return `The ${noun} rule rewritten ${times(depth)} into ${fmt(segments)} segments. Each generation turns by its own angle, between ${deg(low)} and ${deg(high)}, in a wave ${order}${fold}. At rest it spans ${shape}.`;
-  },
-
-  name: ({ name }) => name,
-
-  draw(out, R, detail, time = 0) {
-    const pick = R();
-    // Plants share a quarter of the seeds between their four variants.
-    const s = pick < 0.75 ? Math.floor((pick / 0.75) * 7) : 7 + Math.floor(((pick - 0.75) / 0.25) * 4);
-    const sys = SYSTEMS[s];
-    const drop = R() < 0.3 ? 1 : 0;
-    const angle = sys.angle + (R() * 2 - 1) * sys.wobble;
-    const start = sys.plant ? -90 + (R() * 2 - 1) * 8 : R() * 360;
-    const reach = R();
-    const up = sys.up[0] + reach * (sys.up[1] - sys.up[0]);
-    // Some snowflakes reach down past flat, so their spikes fold inward.
-    const inwardSeed = R() < 0.4 && sys.flip;
-    const down = inwardSeed ? sys.flip[0] + reach * (sys.flip[1] - sys.flip[0]) : sys.down[0] + reach * (sys.down[1] - sys.down[0]);
-    // How far the wave lags from one generation to the next, and which way it runs.
-    const lag = (0.6 + R() * 0.9) * (R() < 0.5 ? -1 : 1);
-
-    // The deepest rewrite under the segment budget, sometimes one less.
-    const cap = Math.round(250 * 1.45 ** (detail - 1));
-    let depth = 1;
-    while (depth < 12 && rewrite(s, depth + 1).segments <= cap) depth++;
-    if (drop && depth > 1 && rewrite(s, depth - 1).segments * 5 >= cap) depth--;
-    const { str, gen, segments } = rewrite(s, depth);
-
-    // Each generation's turn follows sin(t)·cos(t − g·lag): zero at rest and
-    // halfway round, and a wave that reaches each generation a little later.
-    // Scaled to −1..1, it maps smoothly onto angle − down .. angle + up.
-    const corner = ((sys.corner ?? 0) * Math.PI) / 180;
-    const a1 = (up + down) / 2;
-    const a2 = (up - down) / 2;
-    const turnOf = (g, t) => {
-      const c = g * lag;
-      const f = (2 * Math.sin(t) * Math.cos(t - c)) / (1 + Math.abs(Math.sin(c)));
-      return angle + a1 * f + a2 * f * f;
-    };
-    const turns = Float64Array.from({ length: depth + 1 }, (_, g) => (turnOf(g, time) * Math.PI) / 180);
-    let x = 0;
-    let y = 0;
-    let a = (start * Math.PI) / 180;
-    let line = [[0, 0]];
-    const stack = [];
-    let branches = 0;
-    const flush = () => {
-      if (line.length > 1) out.push({ g: out.length, r: false, open: true, p: line });
-    };
-    for (let i = 0; i < str.length; i++) {
-      const c = str[i];
-      const turn = turns[gen[i]];
-      if (DRAWS.has(c)) {
-        x += Math.cos(a);
-        y += Math.sin(a);
-        line.push([x, y]);
-      } else if (c === '+') a += turn;
-      else if (c === '-') a -= turn;
-      else if (c === '<') a += corner;
-      else if (c === '>') a -= corner;
-      else if (c === '[') {
-        stack.push([x, y, a]);
-        branches++;
-      } else if (c === ']') {
-        flush();
-        [x, y, a] = stack.pop();
-        line = [[x, y]];
+    describe({ noun, depth, segments, low, high, inward, aspect, plant, branches, outward }) {
+      const shape = aspect > 1.15 ? `${aspect.toFixed(1)} times as wide as it is tall` : aspect < 1 / 1.15 ? `${(1 / aspect).toFixed(1)} times as tall as it is wide` : 'about as wide as it is tall';
+      if (plant) {
+        return `A plant rule rewritten ${times(depth)} into ${fmt(segments)} segments over ${fmt(branches)} branches. Each generation of forks swings between ${deg(low)} and ${deg(high)}, in a wave running ${outward ? 'from the trunk out to the twigs' : 'from the twigs in to the trunk'}, and it stands ${shape}.`;
       }
-    }
-    flush();
+      const order = outward ? 'from the largest bends down to the finest' : 'from the finest bends up to the largest';
+      const fold = inward ? ', folding its spikes inward past flat and out again' : '';
+      return `The ${noun} rule rewritten ${times(depth)} into ${fmt(segments)} segments. Each generation turns by its own angle, between ${deg(low)} and ${deg(high)}, in a wave ${order}${fold}. At rest it spans ${shape}.`;
+    },
 
-    // Hold the size steady: a fixed step length makes the drawing grow and
-    // shrink as the angles change, which reads as zooming rather than
-    // morphing. Every frame is scaled to the same spread of points around its
-    // centre (around the root, for plants, so they stay planted).
-    let cx = 0;
-    let cy = 0;
-    let n = 0;
-    if (!sys.plant) {
-      for (const f of out) for (const [px, py] of f.p) (cx += px), (cy += py), n++;
-      cx /= n;
-      cy /= n;
-    }
-    let spread = 0;
-    n = 0;
-    for (const f of out) for (const [px, py] of f.p) (spread += (px - cx) ** 2 + (py - cy) ** 2), n++;
-    const k = 100 / Math.sqrt(spread / n || 1);
-    for (const f of out) for (const q of f.p) (q[0] = (q[0] - cx) * k), (q[1] = (q[1] - cy) * k);
+    name: ({ name }) => name,
 
-    // Measured at the still drawing.
-    let x0 = Infinity;
-    let y0 = Infinity;
-    let x1 = -Infinity;
-    let y1 = -Infinity;
-    for (const f of out) {
-      for (const [px, py] of f.p) {
-        x0 = Math.min(x0, px);
-        y0 = Math.min(y0, py);
-        x1 = Math.max(x1, px);
-        y1 = Math.max(y1, py);
+    draw(out, R, detail, time = 0) {
+      const pick = R();
+      // Plants share a quarter of the seeds between their four variants.
+      const curveShare = plants.length ? 0.75 : 1;
+      const s =
+        pick < curveShare
+          ? curves[Math.floor((pick / curveShare) * curves.length)]
+          : plants[Math.floor(((pick - curveShare) / (1 - curveShare)) * plants.length)];
+      const sys = SYSTEMS[s];
+      const drop = R() < 0.3 ? 1 : 0;
+      const angle = sys.angle + (R() * 2 - 1) * sys.wobble;
+      const start = sys.plant ? -90 + (R() * 2 - 1) * 8 : R() * 360;
+      const reach = R();
+      const up = sys.up[0] + reach * (sys.up[1] - sys.up[0]);
+      // Some snowflakes reach down past flat, so their spikes fold inward.
+      const inwardSeed = R() < 0.4 && sys.flip;
+      const down = inwardSeed ? sys.flip[0] + reach * (sys.flip[1] - sys.flip[0]) : sys.down[0] + reach * (sys.down[1] - sys.down[0]);
+      // How far the wave lags from one generation to the next, and which way it runs.
+      const lag = (0.6 + R() * 0.9) * (R() < 0.5 ? -1 : 1);
+
+      // The deepest rewrite under the segment budget, sometimes one less.
+      const cap = Math.round(250 * 1.45 ** (detail - 1));
+      let depth = 1;
+      while (depth < 12 && rewrite(s, depth + 1).segments <= cap) depth++;
+      if (drop && depth > 1 && rewrite(s, depth - 1).segments * 5 >= cap) depth--;
+      const { str, gen, segments } = rewrite(s, depth);
+
+      // Each generation's turn follows sin(t)·cos(t − g·lag): zero at rest and
+      // halfway round, and a wave that reaches each generation a little later.
+      // Scaled to −1..1, it maps smoothly onto angle − down .. angle + up.
+      const corner = ((sys.corner ?? 0) * Math.PI) / 180;
+      const a1 = (up + down) / 2;
+      const a2 = (up - down) / 2;
+      const turnOf = (g, t) => {
+        const c = g * lag;
+        const f = (2 * Math.sin(t) * Math.cos(t - c)) / (1 + Math.abs(Math.sin(c)));
+        return angle + a1 * f + a2 * f * f;
+      };
+      const turns = Float64Array.from({ length: depth + 1 }, (_, g) => (turnOf(g, time) * Math.PI) / 180);
+      let x = 0;
+      let y = 0;
+      let a = (start * Math.PI) / 180;
+      let line = [[0, 0]];
+      const stack = [];
+      let branches = 0;
+      const flush = () => {
+        if (line.length > 1) out.push({ g: out.length, r: false, open: true, p: line });
+      };
+      for (let i = 0; i < str.length; i++) {
+        const c = str[i];
+        const turn = turns[gen[i]];
+        if (DRAWS.has(c)) {
+          x += Math.cos(a);
+          y += Math.sin(a);
+          line.push([x, y]);
+        } else if (c === '+') a += turn;
+        else if (c === '-') a -= turn;
+        else if (c === '<') a += corner;
+        else if (c === '>') a -= corner;
+        else if (c === '[') {
+          stack.push([x, y, a]);
+          branches++;
+        } else if (c === ']') {
+          flush();
+          [x, y, a] = stack.pop();
+          line = [[x, y]];
+        }
       }
-    }
-    const aspect = (x1 - x0) / Math.max(1e-9, y1 - y0);
-    // The range each generation's angle covers over the loop.
-    const low = angle - down;
-    const high = angle + up;
-    return { name: sys.name, noun: sys.noun, depth, segments, low, high, inward: low < 0, aspect, plant: !!sys.plant, branches, outward: lag > 0 };
-  },
+      flush();
+
+      // Hold the size steady: a fixed step length makes the drawing grow and
+      // shrink as the angles change, which reads as zooming rather than
+      // morphing. Every frame is scaled to the same spread of points around its
+      // centre (around the root, for plants, so they stay planted).
+      let cx = 0;
+      let cy = 0;
+      let n = 0;
+      if (!sys.plant) {
+        for (const f of out) for (const [px, py] of f.p) (cx += px), (cy += py), n++;
+        cx /= n;
+        cy /= n;
+      }
+      let spread = 0;
+      n = 0;
+      for (const f of out) for (const [px, py] of f.p) (spread += (px - cx) ** 2 + (py - cy) ** 2), n++;
+      const k = 100 / Math.sqrt(spread / n || 1);
+      for (const f of out) for (const q of f.p) (q[0] = (q[0] - cx) * k), (q[1] = (q[1] - cy) * k);
+
+      // Measured at the still drawing.
+      let x0 = Infinity;
+      let y0 = Infinity;
+      let x1 = -Infinity;
+      let y1 = -Infinity;
+      for (const f of out) {
+        for (const [px, py] of f.p) {
+          x0 = Math.min(x0, px);
+          y0 = Math.min(y0, py);
+          x1 = Math.max(x1, px);
+          y1 = Math.max(y1, py);
+        }
+      }
+      const aspect = (x1 - x0) / Math.max(1e-9, y1 - y0);
+      // The range each generation's angle covers over the loop.
+      const low = angle - down;
+      const high = angle + up;
+      return { name: sys.name, noun: sys.noun, depth, segments, low, high, inward: low < 0, aspect, plant: !!sys.plant, branches, outward: lag > 0 };
+    },
 };
+}
+
+const KOCH = SYSTEMS.findIndex((sys) => sys.name === 'Koch snowflake');
+export const koch = lsystemDesign('koch', [KOCH]);
+export default lsystemDesign(
+  'lsystem',
+  SYSTEMS.map((_, n) => n).filter((n) => n !== KOCH),
+);

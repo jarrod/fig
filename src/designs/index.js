@@ -35,6 +35,7 @@ import marble from './marble.js';
 import phyllotaxis from './phyllotaxis.js';
 import maurer from './maurer.js';
 import lsystem from './lsystem.js';
+import koch from './koch.js';
 import epicycles from './epicycles.js';
 import penrose from './penrose.js';
 import truchet from './truchet.js';
@@ -74,6 +75,7 @@ export const DESIGNS = [
   phyllotaxis,
   maurer,
   lsystem,
+  koch,
   epicycles,
   penrose,
   truchet,
