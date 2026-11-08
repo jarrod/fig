@@ -85,14 +85,22 @@ function pointSet() {
   const map = new Map();
   const key = (i, j) => i * 4194304 + j;
   const cell = (v) => Math.round(v * 2e6);
+  // A neighbouring cell can only hold a match when the point sits within the
+  // tolerance of that side of its own cell, so usually one lookup is enough.
+  const near = (list, x, y) => list !== undefined && list.some(([u, v]) => Math.abs(u - x) < 1e-8 && Math.abs(v - y) < 1e-8);
   return {
     has([x, y]) {
-      const i = cell(x);
-      const j = cell(y);
-      for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) {
-        const list = map.get(key(i + di, j + dj));
-        if (list && list.some(([u, v]) => Math.abs(u - x) < 1e-8 && Math.abs(v - y) < 1e-8)) return true;
-      }
+      const fx = x * 2e6;
+      const fy = y * 2e6;
+      const i = Math.round(fx);
+      const j = Math.round(fy);
+      const ex = fx - i;
+      const ey = fy - j;
+      const di0 = ex < -0.45 ? -1 : 0;
+      const di1 = ex > 0.45 ? 1 : 0;
+      const dj0 = ey < -0.45 ? -1 : 0;
+      const dj1 = ey > 0.45 ? 1 : 0;
+      for (let di = di0; di <= di1; di++) for (let dj = dj0; dj <= dj1; dj++) if (near(map.get(key(i + di, j + dj)), x, y)) return true;
       return false;
     },
     add(p) {
@@ -211,24 +219,55 @@ function build(p, q, edgeOnAxis, decor, cutPx, dir) {
   // step long, set off the centre so no segment sits on its edge. Then find
   // the steps k for which it is drawn at some point in the loop.
   const u0 = -0.413 * step;
+  // The slide for a shift of k steps, as the a of (z + a) / (1 + a z),
+  // written out inline: this runs for every segment, step and sample.
   const size = (s, k) => {
-    const f = slide(k * step);
-    const a = f(s.a);
-    const b = f(s.b);
-    return Math.hypot(a[0] - b[0], a[1] - b[1]);
+    const t = Math.tanh((k * step) / 2);
+    const [ax, ay] = s.a;
+    const [bx, by] = s.b;
+    let dx = 1 + t * ax;
+    let dy = t * ay;
+    let m = dx * dx + dy * dy;
+    let nx = ax + t;
+    const pax = (nx * dx + ay * dy) / m;
+    const pay = (ay * dx - nx * dy) / m;
+    dx = 1 + t * bx;
+    dy = t * by;
+    m = dx * dx + dy * dy;
+    nx = bx + t;
+    const pbx = (nx * dx + by * dy) / m;
+    const pby = (by * dx - nx * dy) / m;
+    return Math.hypot(pax - pbx, pay - pby);
   };
   const slots = [];
   const kMax = Math.ceil((dCut + 2) / step) + 1;
   for (const s of segs) {
     if (s.u < u0 || s.u >= u0 + step) continue;
-    for (let k = -kMax; k <= kMax; k++) {
-      // Over the loop this slot runs from k to k + dir.
-      let big = 0;
-      // Decoration stops sooner than the edges, to keep the rim clear.
-      const least = s.kind ? cut * DECOR_CUT : cut;
-      for (let i = 0; i <= 8 && !big; i++) big = size(s, k + (dir * i) / 8) >= least;
-      if (big) slots.push({ a: s.a, b: s.b, k, kind: s.kind });
+    // Decoration stops sooner than the edges, to keep the rim clear.
+    const least = s.kind ? cut * DECOR_CUT : cut;
+    // Over the loop this slot runs from k to k + dir.
+    const big = (k) => {
+      for (let i = 0; i <= 8; i++) if (size(s, k + (dir * i) / 8) >= least) return true;
+      return false;
+    };
+    // A segment is largest when the slide brings it nearest the centre and
+    // shrinks steadily either side, so scan out from there and stop at the
+    // first step where it stays too small, instead of trying every step.
+    // Most segments in the window lie far off the line of motion and stay
+    // too small to see even at their nearest pass; skip those outright.
+    if (size(s, -s.u / step) < least * 0.6) continue;
+    const kc = Math.max(-kMax, Math.min(kMax, Math.round(-s.u / step)));
+    const ks = [];
+    for (let k = kc; k >= -kMax; k--) {
+      if (big(k)) ks.push(k);
+      else if (k < kc - 1) break;
     }
+    for (let k = kc + 1; k <= kMax; k++) {
+      if (big(k)) ks.push(k);
+      else if (k > kc + 2) break;
+    }
+    ks.sort((x, y) => x - y);
+    for (const k of ks) slots.push({ a: s.a, b: s.b, k, kind: s.kind });
   }
   const result = { slots, step, tilesGrown: tiles.length };
   cache.set(key, result);

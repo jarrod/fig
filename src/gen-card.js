@@ -1,89 +1,151 @@
-import { DESIGN, DESIGNS } from './designs/index.js';
-import { HEIGHT, TAU, WIDTH, build, describeDesign, drawPaths, fitDesign, loopMs, updatePaths } from './core/render.js';
+// The <gen-card> element: one design drawn to a canvas, with its figure
+// number, seed, name and description. The drawing is built and painted by a
+// Web Worker (see core/card-pool.js), and only once the card comes near the
+// viewport, so a page full of cards opens without waiting on the maths. It
+// draws the same paths as the downloadable SVG.
+//
+// When its drawing is ready the element gets a `ready` attribute and fires a
+// `gen-card-ready` event, so a page can show a placeholder until then.
+import * as pool from './core/card-pool.js';
+import { HEIGHT, WIDTH } from './core/frame.js';
 
 const STYLE = `
   :host { display: block; height: 100%; }
   .card { background: #0e1011; border: 1px solid #26292b; border-radius: 12px; padding: 14px 16px 16px; height: 100%; box-sizing: border-box; }
   .meta { display: flex; justify-content: space-between; gap: 8px; font: 11px/1.4 ui-monospace, Menlo, monospace; color: #5e6367; }
-  svg { display: block; width: 100%; margin: 2px 0 6px; }
-  path { fill: #0e1011; stroke: #55595d; stroke-width: 0.7; stroke-linejoin: round; }
-  path.line { fill: none; stroke-width: 0.5; }
+  .art { aspect-ratio: ${WIDTH} / ${HEIGHT}; margin: 2px 0 6px; }
+  canvas { display: block; width: 100%; height: 100%; opacity: 0; }
+  :host([ready]) canvas { opacity: 1; }
+  @media (prefers-reduced-motion: no-preference) { canvas { transition: opacity 0.35s; } }
   h3 { margin: 0 0 4px; font: 500 14px system-ui, sans-serif; color: #d7dade; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* Every card is the same size: the description stops after a set number of
      lines (4 by default, or --gen-card-lines). The full text is in its title. */
   p { margin: 0; font: 400 13px/1.5 system-ui, sans-serif; color: #858a8f; height: calc(1.5em * var(--gen-card-lines, 4));
       display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: var(--gen-card-lines, 4); overflow: hidden; }
-  @media (prefers-reduced-motion: no-preference) { .still path { animation: in 0.35s both; } }
-  @keyframes in { from { opacity: 0; } }
 `;
 
-const escapeHtml = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+// Cards start building this far before they scroll into view.
+const NEAR = '600px 0px';
 
 class GenCard extends HTMLElement {
   static observedAttributes = ['form', 'seed', 'detail', 'fig', 'animate', 'speed', 'frame'];
 
-  #frame = 0;
-  #visible = true;
-  #observer = null;
+  #id = 0;
+  #near = false;
+  #visible = false;
+  #built = '';
+  #observers = [];
 
   connectedCallback() {
-    if (!this.shadowRoot) this.attachShadow({ mode: 'open' });
-    // Skip drawing frames while the card is off screen.
-    this.#observer = new IntersectionObserver(([entry]) => {
-      this.#visible = entry.isIntersecting;
+    if (!this.shadowRoot) {
+      this.attachShadow({ mode: 'open' }).innerHTML = `
+        <style>${STYLE}</style>
+        <div class="card">
+          <div class="meta"><span class="fig"></span><span class="seed"></span></div>
+          <div class="art"><canvas role="img"></canvas></div>
+          <h3>&nbsp;</h3>
+          <p></p>
+        </div>`;
+    }
+    // A canvas can only be handed to a worker once, so a card that is put
+    // back on the page gets a fresh one.
+    let canvas = this.shadowRoot.querySelector('canvas');
+    if (canvas.dataset.taken) {
+      const fresh = document.createElement('canvas');
+      fresh.setAttribute('role', 'img');
+      canvas.replaceWith(fresh);
+      canvas = fresh;
+    }
+    canvas.dataset.taken = '1';
+    this.#id = pool.connect(canvas, (msg) => this.#ready(msg));
+    this.#built = '';
+    this.#meta();
+
+    const art = this.shadowRoot.querySelector('.art');
+    const sized = new ResizeObserver(([entry]) => {
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const width = Math.round(entry.contentRect.width * dpr);
+      if (width) pool.resize(this.#id, width, Math.round((width * HEIGHT) / WIDTH));
     });
-    this.#observer.observe(this);
-    this.render();
+    sized.observe(art);
+    const near = new IntersectionObserver(
+      ([entry]) => {
+        this.#near = entry.isIntersecting;
+        this.#update();
+      },
+      { rootMargin: NEAR },
+    );
+    near.observe(this);
+    const seen = new IntersectionObserver(([entry]) => {
+      this.#visible = entry.isIntersecting;
+      this.#sync();
+    });
+    seen.observe(this);
+    this.#observers = [sized, near, seen];
   }
 
   disconnectedCallback() {
-    cancelAnimationFrame(this.#frame);
-    this.#observer?.disconnect();
+    for (const o of this.#observers) o.disconnect();
+    pool.disconnect(this.#id);
+    this.#id = 0;
   }
 
   attributeChangedCallback() {
-    if (this.shadowRoot) this.render();
+    if (!this.#id) return;
+    this.#meta();
+    this.#update();
   }
 
-  render() {
-    cancelAnimationFrame(this.#frame);
-    const design = DESIGN[this.getAttribute('form') ?? ''] ?? DESIGNS[0];
-    const seed = Number(this.getAttribute('seed')) || 1;
-    const detail = Number(this.getAttribute('detail')) || 5;
-    const fig = escapeHtml(this.getAttribute('fig') ?? '0.1');
-    const loop = this.hasAttribute('animate') && !reducedMotion.matches;
-    const loopLength = loopMs(design, Number(this.getAttribute('speed')) || 1);
-    // Only field designs use the frame; the rest ignore it.
-    const frame = this.getAttribute('frame') ?? undefined;
-
-    const { faces, facts } = build(design, seed, detail, 0, frame);
-    // The heading is the algorithm's name; the description is measured from the drawing.
-    const name = design.name(facts);
-    const body = describeDesign(design, facts, faces.length);
-    const box = faces.length ? fitDesign(design, seed, detail, loop, frame) : null;
-    const label = `${name} drawing, seed ${seed}${loop ? ', animated' : ''}`;
-
-    this.shadowRoot.innerHTML = `
-      <style>${STYLE}</style>
-      <div class="card">
-        <div class="meta"><span>Fig ${fig}</span><span>${seed}</span></div>
-        <svg class="${loop ? 'live' : 'still'}" viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" aria-label="${label}">${
-          box ? drawPaths(faces, box, !loop) : ''
-        }</svg>
-        <h3 title="${escapeHtml(name)}">${name}</h3>
-        <p title="${escapeHtml(body)}">${body}</p>
-      </div>`;
-    if (!loop || !box) return;
-
-    // All cards share one clock, so they move in step and a re-render never jumps.
-    const svg = this.shadowRoot.querySelector('svg');
-    const tick = (now) => {
-      if (this.#visible) updatePaths(svg, build(design, seed, detail, ((now % loopLength) / loopLength) * TAU, frame).faces, box);
-      this.#frame = requestAnimationFrame(tick);
+  #settings() {
+    return {
+      form: this.getAttribute('form') ?? '',
+      seed: Number(this.getAttribute('seed')) || 1,
+      detail: Number(this.getAttribute('detail')) || 5,
+      // Only field designs use the frame; the rest ignore it.
+      frame: this.getAttribute('frame') ?? undefined,
+      speed: Number(this.getAttribute('speed')) || 1,
+      animate: this.hasAttribute('animate') && !reducedMotion.matches,
     };
-    this.#frame = requestAnimationFrame(tick);
+  }
+
+  // Builds the drawing once the card is near the viewport, and again only
+  // when a setting changes. Until a rebuild is ready the old drawing stays.
+  #update() {
+    if (!this.#near) return;
+    const settings = this.#settings();
+    const key = JSON.stringify(settings);
+    if (key !== this.#built) {
+      this.#built = key;
+      pool.build(this.#id, settings);
+    }
+    this.#sync();
+  }
+
+  #sync() {
+    pool.animate(this.#id, Boolean(this.#built) && this.#visible && this.#settings().animate);
+  }
+
+  #meta() {
+    this.shadowRoot.querySelector('.fig').textContent = `Fig ${this.getAttribute('fig') ?? '0.1'}`;
+    this.shadowRoot.querySelector('.seed').textContent = this.getAttribute('seed') ?? '';
+  }
+
+  // The heading is the algorithm's name; the description is measured from the drawing.
+  #ready({ name, body }) {
+    const root = this.shadowRoot;
+    const h3 = root.querySelector('h3');
+    const p = root.querySelector('p');
+    h3.textContent = name;
+    h3.title = name;
+    p.textContent = body;
+    p.title = body;
+    const { seed, animate } = this.#settings();
+    root.querySelector('canvas').setAttribute('aria-label', `${name} drawing, seed ${seed}${animate ? ', animated' : ''}`);
+    if (!this.hasAttribute('ready')) {
+      this.setAttribute('ready', '');
+      this.dispatchEvent(new Event('gen-card-ready', { bubbles: true }));
+    }
   }
 }
 
