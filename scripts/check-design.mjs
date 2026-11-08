@@ -61,6 +61,33 @@ if (texts.size < 30) fail(`only ${texts.size} distinct descriptions over 40 seed
 if (tiny) fail(`${tiny} faces have a single point, which draws nothing: skip them`);
 notes.push(`${texts.size}/40 distinct descriptions, ${names.size} distinct names`);
 
+// The farthest any point of one drawing is from the nearest point of the
+// other, both ways (Hausdorff distance), on 8 px buckets.
+function setDistance(A, B) {
+  const one = (P, Q) => {
+    const grid = new Map();
+    for (const f of Q) for (const [x, y] of f) {
+      const k = `${Math.floor(x / 8)},${Math.floor(y / 8)}`;
+      if (!grid.has(k)) grid.set(k, []);
+      grid.get(k).push([x, y]);
+    }
+    let worst = 0;
+    for (const f of P) for (const [x, y] of f) {
+      let best = Infinity;
+      for (let r = 0; best === Infinity || r <= Math.ceil(best / 8); r++) {
+        for (let i = -r; i <= r; i++) for (let j = -r; j <= r; j++) {
+          if (Math.max(Math.abs(i), Math.abs(j)) !== r) continue;
+          for (const [u, v] of grid.get(`${Math.floor(x / 8) + i},${Math.floor(y / 8) + j}`) ?? []) best = Math.min(best, Math.hypot(u - x, v - y));
+        }
+        if (r > 40) break;
+      }
+      worst = Math.max(worst, best);
+    }
+    return worst;
+  };
+  return Math.max(one(A, B), one(B, A));
+}
+
 // Seamless loop and smooth motion, measured on screen (after fitting).
 let seamWorst = 0;
 let jumpWorst = 0;
@@ -75,11 +102,22 @@ for (const seed of seeds.slice(0, 8)) {
     A.forEach((f, i) => f.forEach((q, j) => (worst = Math.max(worst, Math.hypot(q[0] - B[i][j][0], q[1] - B[i][j][1])))));
     return worst;
   };
-  const s0 = diff(screen(0), screen(TAU));
+  // A drawing that turns by one of its own symmetries over the loop (a
+  // five-lobed vessel turning one lobe) ends on the same picture with its
+  // points renumbered, so the seam is also measured as a set.
+  let s0 = diff(screen(0), screen(TAU));
+  if (s0 !== Infinity && s0 > 0.05) s0 = Math.min(s0, setDistance(screen(0), screen(TAU)));
   seamWorst = Math.max(seamWorst, s0 === Infinity ? 1e9 : s0);
   for (let i = 0; i < 24; i++) {
     const t = (i / 24) * TAU;
-    const d = diff(screen(t), screen(t + TAU / 600));
+    const A = screen(t);
+    const B = screen(t + TAU / 600);
+    let d = diff(A, B);
+    // Contour lines can swap partners at a saddle: face 5 is then a different
+    // line, though nothing on screen jumps. So a large step is only a jump if
+    // the drawing itself moved that far: some point is that far from every
+    // point of the other frame.
+    if (d !== Infinity && d > 6) d = Math.min(d, setDistance(A, B));
     // Faces re-sorted by depth change places in the list, so per-face jumps
     // mean nothing for them; they count as structure changes instead.
     if (d === Infinity || design.resorts) structureChanges++;

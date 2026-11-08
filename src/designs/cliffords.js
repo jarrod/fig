@@ -121,9 +121,17 @@ function strokesFrom(out, R, detail, time, { map, k, base }) {
       }
       // Height is the length of the point's last jump, kept low.
       let here = [x, y, lift * Math.hypot(x - px, y - py)];
-      // A point that lands far from the one before is a jump, not a thread:
-      // repeat the previous point instead, so the point count never changes.
-      if (last && Math.hypot(x - last[0], y - last[1]) > far) here = last;
+      // A point that lands far from the one before is a jump, not a thread.
+      // Its step is shortened smoothly, from full length at `far` down to
+      // nothing at twice that, so the point count never changes and a point
+      // never snaps between two places as the map moves.
+      if (last) {
+        const d = Math.hypot(x - last[0], y - last[1]);
+        if (d > far) {
+          const keep = Math.max(0, 2 * far - d) / d;
+          here = here.map((v, j) => last[j] + (v - last[j]) * keep);
+        }
+      }
       last = here;
       p.push(place(...here));
     }

@@ -157,7 +157,9 @@ export function exportAnimatedSvg(design, seed, detail, style = DEFAULT_STYLE, {
   const sample = (count) =>
     Array.from({ length: count }, (_, i) => build(design, seed, detail, (i / count) * TAU, frameId).faces.map((f) => ({ f, d: pathData(f, box) })));
 
-  const morphFrames = sample(frames);
+  // A design with simple, even motion can ask for fewer keyframes
+  // (design.exportFrames), which keeps a file with many moving faces small.
+  const morphFrames = sample(design.exportFrames ?? frames);
   const first = morphFrames[0];
   // A design that re-sorts its faces by depth each frame (design.resorts)
   // can't morph: a face that changes place in the order would fly across.
