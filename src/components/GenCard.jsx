@@ -21,13 +21,7 @@ function CardSkeleton() {
         <Skeleton className={`h-2.5 w-8 ${bar}`} />
       </div>
       <Skeleton className={`mt-0.5 mb-1.5 aspect-[320/270] w-full ${bar}`} />
-      <Skeleton className={`mt-1 mb-2 h-3.5 w-2/5 ${bar}`} />
-      <div className="flex flex-col gap-[7px] pt-1">
-        <Skeleton className={`h-3 w-full ${bar}`} />
-        <Skeleton className={`h-3 w-11/12 ${bar}`} />
-        <Skeleton className={`h-3 w-full ${bar}`} />
-        <Skeleton className={`h-3 w-3/5 ${bar}`} />
-      </div>
+      <Skeleton className={`mt-1 h-3.5 w-2/5 ${bar}`} />
     </div>
   );
 }

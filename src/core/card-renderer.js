@@ -6,7 +6,7 @@
 // (Path2D takes SVG path strings), filled and stroked the same way, so the
 // canvas shows exactly what the exported file contains.
 import { DESIGN, DESIGNS } from '../designs/index.js';
-import { HEIGHT, TAU, WIDTH, build, describeDesign, fitDesign, loopMs, pathData } from './render.js';
+import { HEIGHT, TAU, WIDTH, build, fitDesign, loopMs, pathData } from './render.js';
 
 // The card's colours and line widths, in the drawing's own 320 × 270 units.
 const LINE = '#55595d';
@@ -82,7 +82,7 @@ export function createRenderer(post) {
       });
       card.faces = faces;
       draw(card, card.faces);
-      post({ type: 'ready', id, gen, name: design.name(facts), body: describeDesign(design, facts, faces.length) });
+      post({ type: 'ready', id, gen, name: design.name(facts) });
     },
 
     play({ id, now }) {

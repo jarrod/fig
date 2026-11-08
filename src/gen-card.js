@@ -1,5 +1,6 @@
 // The <gen-card> element: one design drawn to a canvas, with its figure
-// number, seed, name and description. The drawing is built and painted by a
+// number, seed and the algorithm's name. The description lives on the
+// design's own page. The drawing is built and painted by a
 // Web Worker (see core/card-pool.js), and only once the card comes near the
 // viewport, so a page full of cards opens without waiting on the maths. It
 // draws the same paths as the downloadable SVG.
@@ -21,11 +22,8 @@ const STYLE = `
   canvas { display: block; width: 100%; height: 100%; opacity: 0; }
   :host([ready]) canvas { opacity: 1; }
   @media (prefers-reduced-motion: no-preference) { canvas { transition: opacity 0.35s; } }
-  h3 { margin: 0 0 4px; font: 500 14px system-ui, sans-serif; color: #d7dade; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  /* Every card is the same size: the description stops after a set number of
-     lines (4 by default, or --gen-card-lines). The full text is in its title. */
-  p { margin: 0; font: 400 13px/1.5 system-ui, sans-serif; color: #858a8f; height: calc(1.5em * var(--gen-card-lines, 4));
-      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: var(--gen-card-lines, 4); overflow: hidden; }
+  /* One line, so every card is the same size. */
+  h3 { margin: 0; font: 500 14px/1.4 system-ui, sans-serif; color: #d7dade; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 `;
 
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -50,7 +48,6 @@ class GenCard extends HTMLElement {
           <div class="meta"><span class="fig"></span><span class="seed"></span></div>
           <div class="art"><canvas role="img"></canvas></div>
           <h3>&nbsp;</h3>
-          <p></p>
         </div>`;
     }
     // A canvas can only be handed to a worker once, so a card that is put
@@ -162,15 +159,12 @@ class GenCard extends HTMLElement {
     this.shadowRoot.querySelector('.seed').textContent = this.getAttribute('seed') ?? '';
   }
 
-  // The heading is the algorithm's name; the description is measured from the drawing.
-  #ready({ name, body }) {
+  // The heading is the algorithm's name.
+  #ready({ name }) {
     const root = this.shadowRoot;
     const h3 = root.querySelector('h3');
-    const p = root.querySelector('p');
     h3.textContent = name;
     h3.title = name;
-    p.textContent = body;
-    p.title = body;
     const { seed, animate } = this.#settings();
     root.querySelector('canvas').setAttribute('aria-label', `${name} drawing, seed ${seed}${animate ? ', animated' : ''}`);
     if (!this.hasAttribute('ready')) {

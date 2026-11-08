@@ -1,6 +1,8 @@
 // The home page: every design as a card, at fixed settings. A card animates
 // while it is hovered or focused. Each design's own page has the full controls.
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { DicesIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { GenCard } from '@/components/GenCard';
 import { DESIGNS } from '@/designs/index.js';
 import { Link } from '@/lib/router';
@@ -8,15 +10,23 @@ import { Link } from '@/lib/router';
 // The gallery's fixed settings.
 const DETAIL = 5;
 
-const newSeeds = () => Object.fromEntries(DESIGNS.map((d) => [d.id, 1 + Math.floor(Math.random() * 9998)]));
+const randomSeed = () => 1 + Math.floor(Math.random() * 9998);
 
 // Lives outside the component so the seeds survive visits to design pages.
-const seeds = newSeeds();
+let saved = Object.fromEntries(DESIGNS.map((d) => [d.id, randomSeed()]));
 
 // Links carry the seed over to the design page.
 const hrefFor = (design, seed) => `?d=${design.id}&seed=${seed}&detail=${DETAIL}`;
 
 export default function Gallery() {
+  const [seeds, setSeeds] = useState(saved);
+  const reshuffle = (id) =>
+    setSeeds((prev) => {
+      let seed = randomSeed();
+      while (seed === prev[id]) seed = randomSeed();
+      return (saved = { ...prev, [id]: seed });
+    });
+
   useEffect(() => {
     document.title = 'Gen Cards';
   }, []);
@@ -34,15 +44,28 @@ export default function Gallery() {
       <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-3">
         {DESIGNS.map((design, i) => {
           const seed = seeds[design.id];
+          // The button sits beside the link rather than inside it, since a
+          // link can't contain another control.
           return (
-            <Link
-              key={design.id}
-              href={hrefFor(design, seed)}
-              aria-label={`Open ${design.id}, seed ${seed}`}
-              className="block rounded-xl outline-none transition hover:brightness-125 focus-visible:ring-3 focus-visible:ring-ring/50"
-            >
-              <GenCard form={design.id} seed={seed} detail={DETAIL} fig={`0.${i + 1}`} animate="hover" />
-            </Link>
+            <div key={design.id} className="group relative">
+              <Link
+                href={hrefFor(design, seed)}
+                aria-label={`Open ${design.id}, seed ${seed}`}
+                className="block h-full rounded-xl outline-none transition hover:brightness-125 focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                <GenCard form={design.id} seed={seed} detail={DETAIL} fig={`0.${i + 1}`} animate="hover" />
+              </Link>
+              <Button
+                variant="outline"
+                size="icon-xs"
+                aria-label={`New seed for ${design.id}`}
+                title="New seed"
+                onClick={() => reshuffle(design.id)}
+                className="absolute top-9 right-[18px] z-10 border-[#26292b] bg-[#0e1011]/85 text-[#858a8f] opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-[#1a1d1f] hover:text-[#d7dade] focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
+              >
+                <DicesIcon />
+              </Button>
+            </div>
           );
         })}
       </div>
