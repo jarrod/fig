@@ -34,7 +34,8 @@ import chladni from './chladni.js';
 import marble from './marble.js';
 import phyllotaxis from './phyllotaxis.js';
 import maurer from './maurer.js';
-import lsystem from './lsystem.js';
+import { curves } from './lsystem.js';
+import { split } from './pinned.js';
 import koch from './koch.js';
 import epicycles from './epicycles.js';
 import penrose from './penrose.js';
@@ -51,8 +52,10 @@ import billiards from './billiards.js';
 import fieldlines from './fieldlines.js';
 import standardmap from './standardmap.js';
 
+// Designs that draw several types are split into one card per type, so a
+// new seed only varies the drawing within its type (see pinned.js).
 export const DESIGNS = [
-  plates,
+  ...split(plates, 1, [['plates', 0, 1 / 3], ['damped', 1 / 3, 2 / 3], ['powerlaw', 2 / 3, 1]]),
   towers,
   terraces,
   sheets,
@@ -61,21 +64,21 @@ export const DESIGNS = [
   ridges,
   vessels,
   blocks,
-  crystals,
+  ...split(crystals, 0, [['crystals', 0, 1 / 3], ['ulam8', 1 / 3, 2 / 3], ['fredkin', 2 / 3, 1]]),
   paths,
-  fractals,
+  ...split(fractals, 0, [['fractals', 0, 1 / 3], ['vicsek', 1 / 3, 2 / 3], ['cantor', 2 / 3, 1]]),
   contours,
   columns,
   pillars,
-  minimal,
-  attractors,
+  ...split(minimal, 0, [['minimal', 0, 0.45], ['scherk', 0.45, 0.75], ['enneper', 0.75, 1]]),
+  ...split(attractors, 0, [['attractors', 0, 1 / 3], ['aizawa', 1 / 3, 2 / 3], ['thomas', 2 / 3, 1]]),
   flows,
   harmonographs,
   spirographs,
   knots,
   torusknots,
-  cliffords,
-  ribbons,
+  ...split(cliffords, 0, [['cliffords', 0, 0.5], ['dejong', 0.5, 1]]),
+  ...split(ribbons, 0, [['ribbons', 0, 0.5], ['thomasribbon', 0.5, 1]]),
   pendulums,
   growth,
   branches,
@@ -86,7 +89,7 @@ export const DESIGNS = [
   marble,
   phyllotaxis,
   maurer,
-  lsystem,
+  ...curves,
   koch,
   epicycles,
   penrose,
@@ -94,12 +97,19 @@ export const DESIGNS = [
   hyperbolic,
   dedekind,
   apollonian,
-  conformal,
+  ...split(conformal, 0, [
+    ['conformal', 0, 1 / 6],
+    ['expmap', 1 / 6, 2 / 6],
+    ['rationalmap', 2 / 6, 3 / 6],
+    ['powermap', 3 / 6, 4 / 6],
+    ['sinemap', 4 / 6, 5 / 6],
+    ['mobius', 5 / 6, 1],
+  ]),
   julia,
   hopf,
   caustics,
-  billiards,
-  fieldlines,
+  ...split(billiards, 0, [['billiards', 0, 0.72], ['cardioid', 0.72, 1]]),
+  ...split(fieldlines, 0, [['fieldlines', 0.3, 1], ['vortex', 0, 0.3]]),
   standardmap,
 ];
 

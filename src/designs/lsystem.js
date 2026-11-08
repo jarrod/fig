@@ -96,7 +96,7 @@ function lsystemDesign(id, pool) {
     draw(out, R, detail, time = 0) {
       const pick = R();
       // Plants share a quarter of the seeds between their four variants.
-      const curveShare = plants.length ? 0.75 : 1;
+      const curveShare = !plants.length ? 1 : !curves.length ? 0 : 0.75;
       const s =
         pick < curveShare
           ? curves[Math.floor((pick / curveShare) * curves.length)]
@@ -204,8 +204,16 @@ function lsystemDesign(id, pool) {
 }
 
 const KOCH = SYSTEMS.findIndex((sys) => sys.name === 'Koch snowflake');
+// One card per system; the four plant rules share a card.
+const only = (name) => SYSTEMS.map((_, n) => n).filter((n) => SYSTEMS[n].name === name);
 export const koch = lsystemDesign('koch', [KOCH]);
-export default lsystemDesign(
-  'lsystem',
-  SYSTEMS.map((_, n) => n).filter((n) => n !== KOCH),
-);
+export const curves = [
+  lsystemDesign('lsystem', only('Dragon curve')),
+  lsystemDesign('levy', only('Lévy C curve')),
+  lsystemDesign('gosper', only('Gosper curve')),
+  lsystemDesign('arrowhead', only('Sierpiński arrowhead')),
+  lsystemDesign('peano', only('Peano curve')),
+  lsystemDesign('kochisland', only('Quadratic Koch island')),
+  lsystemDesign('plant', only('Fractal plant')),
+];
+export default curves[0];

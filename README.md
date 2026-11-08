@@ -46,7 +46,7 @@ Add `animate` to loop the drawing while the card is on screen, or `animate="hove
 
 ## Layout
 
-- `src/designs/` holds one file per design. Each exports `{ id, kind, name, describe, draw }`, and optionally `loopSeconds`, `framed`, and `resorts` (for a solid whose faces are re-sorted by depth each frame, so its animated export swaps frames instead of morphing). To add a design, add a file and list it in `src/designs/index.js`.
+- `src/designs/` holds one file per design. Each exports `{ id, kind, name, describe, draw }`, and optionally `loopSeconds`, `framed`, and `resorts` (for a solid whose faces are re-sorted by depth each frame, so its animated export swaps frames instead of morphing). To add a design, add a file and list it in `src/designs/index.js`. A design that draws several types (Lorenz, Aizawa or Thomas, say) is split into one card per type in the list with `split()` from `src/designs/pinned.js`, so a new seed only varies the drawing within its type.
 - `scripts/check-design.mjs` checks a design against the rules below: it draws the same thing every time, loops without a seam, moves smoothly, is fast enough to animate, varies its text from seed to seed, and exports cleanly. `node scripts/check-design.mjs src/designs/<name>.js --sheet sheet.png` also renders a contact sheet of seeds with headless Chrome, and `--frame circle` checks a frame shape.
 - `src/core/geometry.js` has the shared geometry: isometric projection, the seeded random generator, boxes, prisms, noise and more. `src/core/marching.js` traces contour lines. `src/core/text.js` has small helpers for descriptions.
 - `src/core/render.js` fits a drawing to the frame, turns faces into SVG paths, and builds the exported files.

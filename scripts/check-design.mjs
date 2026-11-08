@@ -2,6 +2,7 @@
 // renders a contact sheet of seeds to PNG with headless Chrome for a look.
 //
 //   node scripts/check-design.mjs src/designs/flows.js [--sheet out.png] [--frame circle]
+//   node scripts/check-design.mjs gosper            (a registered design, by id)
 //
 // Rules checked: draws something for most seeds, finite points, deterministic,
 // loops seamlessly (time 0 equals time 2π), moves smoothly (no jumps between
@@ -18,7 +19,11 @@ import { FRAME_IDS } from '../src/core/frame.js';
 const args = process.argv.slice(2);
 const file = args.find((a) => !a.startsWith('--') && !args[args.indexOf(a) - 1]?.startsWith('--'));
 const opt = (name) => (args.includes(`--${name}`) ? args[args.indexOf(`--${name}`) + 1] : undefined);
-const design = (await import(pathToFileURL(resolve(file)).href)).default;
+// A file path, or the id of a registered design (such as one card of a split design).
+const design = file.endsWith('.js')
+  ? (await import(pathToFileURL(resolve(file)).href)).default
+  : (await import('../src/designs/index.js')).DESIGN[file];
+if (!design) throw new Error(`No design file or id "${file}"`);
 const frameId = opt('frame');
 const problems = [];
 const notes = [];

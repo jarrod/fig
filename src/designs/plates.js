@@ -5,10 +5,10 @@ export default {
   id: 'plates',
   kind: 'solid',
 
-  describe({ type, slabs, tallest, front }) {
-    if (type === 0) return `${slabs} slabs climb to the crest, then fall until the front slab is ${pct(front)}% of the tallest.`;
-    if (type === 1) return `${slabs} slabs ripple, tallest ${pct(tallest)}% of the way forward, ending at ${pct(front)}% of that height.`;
-    return `${slabs} slabs shrink steadily until the front slab is ${pct(front)}% of the back slab.`;
+  describe({ type, slabs, tallest, front, crest, power, waves }) {
+    if (type === 0) return `${slabs} slabs climb for the first ${pct(crest)}% of the way to the crest, then fall along a 1.6 power curve until the front slab is ${pct(front)}% of the tallest.`;
+    if (type === 1) return `${slabs} slabs ripple through ${waves.toFixed(1)} waves, tallest ${pct(tallest)}% of the way forward, ending at ${pct(front)}% of that height.`;
+    return `${slabs} slabs shrink as a power of ${power.toFixed(2)} until the front slab is ${pct(front)}% of the back slab.`;
   },
 
   name: ({ type }) => ['Power curve', 'Damped sine', 'Power-law decay'][type],
@@ -45,6 +45,9 @@ export default {
       slabs: heights.length,
       tallest: tallest / (heights.length - 1),
       front: heights[heights.length - 1] / heights[tallest],
+      crest: peak,
+      power: freq - 1,
+      waves: (freq * 2) / (2 * Math.PI),
     };
   },
 };

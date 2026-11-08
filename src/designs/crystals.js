@@ -1,15 +1,18 @@
 import { box } from '../core/geometry.js';
+import { plural } from '../core/text.js';
 
 export default {
   id: 'crystals',
   kind: 'solid',
 
-  describe: ({ rule }) =>
-    [
-      'A cell switches on when exactly one of its 4 neighbours is on, and stays on. Taller columns grew earlier.',
-      'A cell switches on when exactly one of its 8 neighbours is on, and stays on. Taller columns grew earlier.',
-      'A cell is on when an odd number of its 4 neighbours were on, so the start keeps copying itself. Taller columns were on for longer.',
-    ][rule],
+  describe: ({ rule, seeds, steps, cells, tallest }) =>
+    `${
+      [
+        'A cell switches on when exactly one of its 4 neighbours is on, and stays on. Taller columns grew earlier.',
+        'A cell switches on when exactly one of its 8 neighbours is on, and stays on. Taller columns grew earlier.',
+        'A cell is on when an odd number of its 4 neighbours were on, so the start keeps copying itself. Taller columns were on for longer.',
+      ][rule]
+    } From ${plural(seeds, 'seeded cell')}, ${plural(steps, 'step')} leave ${plural(cells, 'column')}, the tallest ${plural(tallest, 'step')} high.`,
 
   name: ({ rule }) => ['Ulam–Warburton automaton', 'Ulam–Warburton, 8 neighbours', 'Fredkin replicator'][rule],
 
@@ -58,14 +61,23 @@ export default {
       cur = next;
     }
     const unit = 6 / steps;
+    let cells = 0;
+    let tallest = 0;
     for (let x = 0; x < n; x++) {
       for (let y = 0; y < n; y++) {
         const i = at(x, y);
         const h = rule === 2 ? onFor[i] : born[i] < 0 ? 0 : shown - born[i];
         if (h <= 0) continue;
+        cells++;
+        tallest = Math.max(tallest, h);
         box(out, x * 1.08, y * 1.08, 0, 1, 1, h * unit, x + y);
       }
     }
-    return { rule };
+    // The seeded start, counted in cells.
+    let seeds = 0;
+    groups.forEach((group, bit) => {
+      if (start & (1 << bit)) seeds += new Set(group.flatMap(([a, b]) => [[1, 1], [-1, 1], [1, -1], [-1, -1]].flatMap(([sx, sy]) => [`${a * sx},${b * sy}`, `${b * sx},${a * sy}`]))).size;
+    });
+    return { rule, seeds, steps: shown, cells, tallest };
   },
 };
