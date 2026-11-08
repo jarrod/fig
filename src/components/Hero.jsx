@@ -2,8 +2,8 @@
 // dark, softly lit stage, and a Damped sine drawing from the collection
 // slowly moving on the right.
 import { useEffect, useRef } from 'react';
-import { DESIGN } from '@/designs/index.js';
-import { exportAnimatedSvg, exportSvg } from '@/core/render.js';
+import { DESIGN, DESIGNS } from '@/designs/index.js';
+import { TAU, build, exportAnimatedSvg, exportSvg, fitDesign } from '@/core/render.js';
 
 const DRAWING = { form: 'damped', seed: 3901, detail: 5, speed: 0.5 };
 const STYLE = { line: '#9ca1a6', background: '#08090a', transparent: true, width: 1 };
@@ -15,11 +15,35 @@ const STYLE = { line: '#9ca1a6', background: '#08090a', transparent: true, width
 // the drawing is scaled.
 const still = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const design = DESIGN[DRAWING.form];
+// Its figure number in the collection, as on its card.
+const fig = `0.${DESIGNS.indexOf(design) + 1}`;
+// The part of the export's 320 × 270 frame the drawing covers over its
+// whole loop, so the SVG can be cropped to it and its label sit close by.
+function outline() {
+  const { seed, detail } = DRAWING;
+  const box = fitDesign(design, seed, detail, true);
+  let [x0, y0, x1, y1] = [Infinity, Infinity, -Infinity, -Infinity];
+  for (let i = 0; i < 24; i++) {
+    for (const f of build(design, seed, detail, (i / 24) * TAU).faces) {
+      for (const [x, y] of f.p) {
+        const X = x * box.k + box.ox;
+        const Y = y * box.k + box.oy;
+        [x0, y0, x1, y1] = [Math.min(x0, X), Math.min(y0, Y), Math.max(x1, X), Math.max(y1, Y)];
+      }
+    }
+  }
+  const m = 2; // Room for the line width.
+  return [x0 - m, y0 - m, x1 - x0 + 2 * m, y1 - y0 + 2 * m].map((v) => +v.toFixed(1));
+}
+const view = outline();
+
 const drawing = (
   still
     ? exportSvg(design, DRAWING.seed, DRAWING.detail, STYLE)
     : exportAnimatedSvg(design, DRAWING.seed, DRAWING.detail, STYLE, { speed: DRAWING.speed }).svg
-).replace('<svg ', '<svg preserveAspectRatio="xMidYMid meet" ');
+)
+  .replace(/viewBox="[^"]*"/, `viewBox="${view.join(' ')}"`)
+  .replace('<svg ', '<svg preserveAspectRatio="xMidYMid meet" ');
 
 export function Hero() {
   // The drawing's animation pauses while it is off screen, so it costs nothing
@@ -61,17 +85,20 @@ export function Hero() {
           </p>
         </div>
 
-        {/* The drawing, fading out softly toward its edges. */}
-        <div
-          ref={art}
-          aria-hidden="true"
-          className="hero-rise aspect-[320/270] w-full opacity-60 [--d:240ms] [&_path]:[vector-effect:non-scaling-stroke] [&_svg]:size-full"
-          style={{
-            maskImage: 'radial-gradient(ellipse 50% 50% at 50% 50%, black 55%, transparent 100%)',
-            WebkitMaskImage: 'radial-gradient(ellipse 50% 50% at 50% 50%, black 55%, transparent 100%)',
-          }}
-          dangerouslySetInnerHTML={{ __html: drawing }}
-        />
+        {/* The drawing, labelled like its card in the collection. */}
+        <figure className="hero-rise w-full max-w-[300px] justify-self-center [--d:240ms] md:justify-self-end">
+          <div
+            ref={art}
+            aria-hidden="true"
+            className="w-full opacity-60 [&_path]:[vector-effect:non-scaling-stroke] [&_svg]:size-full"
+            style={{ aspectRatio: `${view[2]} / ${view[3]}` }}
+            dangerouslySetInnerHTML={{ __html: drawing }}
+          />
+          <figcaption className="mt-4 flex justify-between font-mono text-[11px] text-white/40">
+            <span>Fig {fig}</span>
+            <span>Seed {DRAWING.seed}</span>
+          </figcaption>
+        </figure>
       </div>
 
       {/* In the dark theme the stage fades into the page below. */}
