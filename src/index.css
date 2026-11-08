@@ -135,14 +135,10 @@ body {
 }
 
 /* The hero's entrance: each part rises into focus in turn (--d staggers
-   them), and its floating shapes bob slowly. Both only for visitors who
-   don't ask for less motion. */
+   them), only for visitors who don't ask for less motion. */
 @media (prefers-reduced-motion: no-preference) {
   .hero-rise {
     animation: hero-rise 1.2s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms) both;
-  }
-  .hero-float {
-    animation: hero-float var(--float-time, 12s) ease-in-out infinite alternate;
   }
 }
 
@@ -154,11 +150,3 @@ body {
   }
 }
 
-@keyframes hero-float {
-  from {
-    transform: translateY(-10px) rotate(-1.5deg);
-  }
-  to {
-    transform: translateY(10px) rotate(1.5deg);
-  }
-}

@@ -1,44 +1,21 @@
 // The home page's hero: a live catenoid bending into a helicoid on a dark
-// stage, with two smaller shapes floating at other depths around it. All
-// three are real designs from the collection, drawn by the same workers as
-// the cards. The shapes drift a little with the pointer, at speeds set by
-// their depth, unless the visitor prefers reduced motion.
+// stage. It is a real design from the collection, drawn by the same workers
+// as the cards, and drifts a little with the pointer unless the visitor
+// prefers reduced motion.
 import { useRef } from 'react';
 import { ArrowDownIcon, ArrowRightIcon } from 'lucide-react';
 import { LiveShape } from '@/components/LiveShape';
 import { Link } from '@/lib/router';
 
-// The centre piece and the two around it: design, seed and line style.
-// `clear` lets the stage's lighting show through each shape's faces.
+// The centre piece: design, seed and line style. `clear` lets the stage's
+// lighting show through the shape's faces.
 const STAGE = {
   form: 'minimal',
   seed: 77,
   detail: 6,
   style: { line: '#ffffff', lineEnd: 'rgba(255,255,255,0.1)', width: 0.7, clear: true },
 };
-const BEHIND = { form: 'apollonian', seed: 42, speed: 0.6, style: { line: '#d5d9dd', lineEnd: '#24282b', width: 0.9, clear: true } };
-const FRONT = { form: 'torusknots', seed: 808, speed: 0.6, style: { line: '#f1f3f5', lineEnd: '#3b4044', width: 1.1, clear: true } };
-
 const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-// One shape at a depth: further back is smaller, dimmer, softer and moves
-// less with the pointer.
-function Satellite({ shape, depth, className, float }) {
-  return (
-    <div
-      aria-hidden="true"
-      className={`pointer-events-none absolute ${className}`}
-      style={{
-        transform: `translate3d(calc(var(--mx, 0) * ${depth * -40}px), calc(var(--my, 0) * ${depth * -28}px), 0)`,
-        transition: 'transform 900ms cubic-bezier(0.2, 0.7, 0.2, 1)',
-      }}
-    >
-      <div className={`hero-float size-full ${float}`}>
-        <LiveShape {...shape} className="size-full" />
-      </div>
-    </div>
-  );
-}
 
 export function Hero({ count, stageHref, stageFig, surpriseHref, onSurprise }) {
   const section = useRef(null);
@@ -90,19 +67,6 @@ export function Hero({ count, stageHref, stageFig, surpriseHref, onSurprise }) {
           style={{ background: 'radial-gradient(closest-side, rgba(255,255,255,0.08), transparent)' }}
         />
       </div>
-
-      <Satellite
-        shape={BEHIND}
-        depth={0.5}
-        float="[--float-time:14s]"
-        className="top-[9%] -left-[9%] aspect-square w-[clamp(200px,30vw,420px)] opacity-25 blur-[1.5px] md:top-[14%] md:-left-[3%] md:opacity-40"
-      />
-      <Satellite
-        shape={FRONT}
-        depth={1.4}
-        float="[--float-time:11s] [animation-delay:-4s]"
-        className="top-[71%] -right-[18%] aspect-[320/270] w-[clamp(220px,34vw,500px)] opacity-35 md:top-[44%] md:-right-[4%] md:opacity-60"
-      />
 
       <div className="relative mx-auto flex max-w-6xl flex-col items-center px-4 pt-16 text-center md:pt-20">
         <p className="hero-rise inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-white/60 backdrop-blur">
