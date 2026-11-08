@@ -156,8 +156,11 @@ export function exportAnimatedSvg(design, seed, detail, style = DEFAULT_STYLE, {
 
   const morphFrames = sample(frames);
   const first = morphFrames[0];
+  // A design that re-sorts its faces by depth each frame (design.resorts)
+  // can't morph: a face that changes place in the order would fly across.
   const canMorph =
     box &&
+    !design.resorts &&
     morphFrames.every((frame) => frame.length === first.length && frame.every((p, i) => p.f.open === first[i].f.open && shapeOf(p.d) === shapeOf(first[i].d)));
 
   if (canMorph) {

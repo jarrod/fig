@@ -22,7 +22,7 @@
   <text class="in d1" x="72" y="118" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="17" letter-spacing="3" fill="#9198a1">GENERATIVE LINE DRAWINGS</text>
   <text class="in d2" x="68" y="210" font-size="92" font-weight="600" letter-spacing="-3" fill="#f0f6fc">Gen Cards</text>
   <text class="in d3" font-size="25" fill="#9198a1">
-    <tspan x="72" y="262">38 algorithms, each drawing its own seeded figure.</tspan>
+    <tspan x="72" y="262">49 algorithms, each drawing its own seeded figure.</tspan>
     <tspan x="72" y="296">Export any of them as plain, animated SVG.</tspan>
   </text>
   <g class="in d4" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="16" letter-spacing="1" fill="#9198a1">

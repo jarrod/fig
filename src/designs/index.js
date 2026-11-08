@@ -39,6 +39,17 @@ import koch from './koch.js';
 import epicycles from './epicycles.js';
 import penrose from './penrose.js';
 import truchet from './truchet.js';
+import minimal from './minimal.js';
+import hyperbolic from './hyperbolic.js';
+import dedekind from './dedekind.js';
+import apollonian from './apollonian.js';
+import conformal from './conformal.js';
+import julia from './julia.js';
+import hopf from './hopf.js';
+import caustics from './caustics.js';
+import billiards from './billiards.js';
+import fieldlines from './fieldlines.js';
+import standardmap from './standardmap.js';
 
 export const DESIGNS = [
   plates,
@@ -56,6 +67,7 @@ export const DESIGNS = [
   contours,
   columns,
   pillars,
+  minimal,
   attractors,
   flows,
   harmonographs,
@@ -79,6 +91,16 @@ export const DESIGNS = [
   epicycles,
   penrose,
   truchet,
+  hyperbolic,
+  dedekind,
+  apollonian,
+  conformal,
+  julia,
+  hopf,
+  caustics,
+  billiards,
+  fieldlines,
+  standardmap,
 ];
 
 export const DESIGN = Object.fromEntries(DESIGNS.map((d) => [d.id, d]));

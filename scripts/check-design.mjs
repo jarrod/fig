@@ -75,7 +75,9 @@ for (const seed of seeds.slice(0, 8)) {
   for (let i = 0; i < 24; i++) {
     const t = (i / 24) * TAU;
     const d = diff(screen(t), screen(t + TAU / 600));
-    if (d === Infinity) structureChanges++;
+    // Faces re-sorted by depth change places in the list, so per-face jumps
+    // mean nothing for them; they count as structure changes instead.
+    if (d === Infinity || design.resorts) structureChanges++;
     else jumpWorst = Math.max(jumpWorst, d);
   }
 }
