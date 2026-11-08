@@ -1,9 +1,17 @@
 // One design's page: a large live preview, seed and style controls, and export.
 // Every setting is kept in the URL, so a page can be shared as it looks.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeftIcon, ArrowRightIcon, CopyIcon, DicesIcon, DownloadIcon, FilmIcon } from 'lucide-react';
+import { ArrowLeftIcon, ArrowRightIcon, ChevronDownIcon, CopyIcon, DicesIcon, DownloadIcon, FilmIcon, LoaderIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { ButtonGroup } from '@/components/ui/button-group';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -348,18 +356,31 @@ export default function Designer({ design, params }) {
             <Separator />
 
             <Section title="Export">
-              <Button onClick={downloadStill}>
-                <DownloadIcon data-icon="inline-start" />
-                Download SVG
-              </Button>
-              <Button variant="outline" onClick={copy}>
-                <CopyIcon data-icon="inline-start" />
-                Copy SVG code
-              </Button>
-              <Button variant="outline" onClick={downloadAnimated} disabled={building}>
-                <FilmIcon data-icon="inline-start" />
-                {building ? 'Building…' : 'Download animated SVG'}
-              </Button>
+              {/* The usual export is one click; the others are in the menu. */}
+              <ButtonGroup className="w-full">
+                <Button onClick={downloadStill} className="flex-1">
+                  <DownloadIcon data-icon="inline-start" />
+                  Download SVG
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={<Button size="icon" aria-label="More export options" className="border-l border-l-primary-foreground/15" />}
+                  >
+                    {building ? <LoaderIcon className="animate-spin" /> : <ChevronDownIcon />}
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-60">
+                    <DropdownMenuItem onClick={downloadAnimated} disabled={building}>
+                      <FilmIcon />
+                      {building ? 'Building animated SVG…' : 'Download animated SVG'}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={copy}>
+                      <CopyIcon />
+                      Copy SVG code
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </ButtonGroup>
             </Section>
           </CardContent>
         </Card>
