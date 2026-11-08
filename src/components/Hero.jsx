@@ -94,7 +94,7 @@ export function Hero() {
             style={{ aspectRatio: `${view[2]} / ${view[3]}` }}
             dangerouslySetInnerHTML={{ __html: drawing }}
           />
-          <figcaption className="mt-4 flex justify-between font-mono text-[11px] text-white/40">
+          <figcaption className="mt-4 flex justify-end gap-4 font-mono text-[11px] text-white/40">
             <span>Fig {fig}</span>
             <span>Seed {DRAWING.seed}</span>
           </figcaption>
