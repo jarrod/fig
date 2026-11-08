@@ -5,10 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Gen Cards</title>
     <meta name="description" content="A collection of generative line drawings you can restyle and export as SVG." />
-    <link rel="stylesheet" href="/src/site.css" />
+    <script>
+      // Follow the system theme before first paint, so the page doesn't flash.
+      if (matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
+    </script>
   </head>
   <body>
-    <main id="app"></main>
-    <script type="module" src="/src/main.js"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-The site runs at http://localhost:5174. `npm run build` writes a static site to `dist/` that works on any static host. It assumes it's served from the root of a domain; to host it under a sub-path, set `base` in a Vite config.
+The site runs at http://localhost:5174. It's built with React, Tailwind CSS v4 and [shadcn/ui](https://ui.shadcn.com) on Base UI (style `base-nova`), on Vite. Add more shadcn components with `npx shadcn@latest add <name>`; they land in `src/components/ui/`. `npm run build` writes a static site to `dist/` that works on any static host. It assumes it's served from the root of a domain; to host it under a sub-path, set `base` in a Vite config.
 
 ## The site
 
@@ -35,6 +35,7 @@ Add `animate` to loop the drawing by moving its own seeded values, and `speed` (
 - `src/designs/` holds one file per design. Each exports `{ id, kind, name, describe, draw }`, and optionally `loopSeconds`. To add a design, add a file and list it in `src/designs/index.js`.
 - `src/core/geometry.js` has the shared geometry: isometric projection, the seeded random generator, boxes, prisms, noise and more. `src/core/marching.js` traces contour lines. `src/core/text.js` has small helpers for descriptions.
 - `src/core/render.js` fits a drawing to the frame, turns faces into SVG paths, and builds the exported files.
-- `src/gen-card.js` defines the `<gen-card>` element. `src/main.js`, `src/gallery.js` and `src/designer.js` are the site.
+- `src/gen-card.js` defines the `<gen-card>` element. It has no React or other dependencies, so it works on any page.
+- `src/App.jsx`, `src/pages/Gallery.jsx` and `src/pages/Designer.jsx` are the site, with a small query-string router in `src/lib/router.jsx`. `src/components/GenCard.jsx` wraps the element for React, setting its attributes directly, because React would otherwise assign `animate` as a property and replace the element's built-in `animate()` method.
 
 A design's `draw(out, R, detail, time, seed)` pushes faces into `out` and returns the facts its text needs. All randomness comes from `R`, called the same number of times at every `time`. `time` is in radians: 0 is the still drawing, and every motion repeats exactly every 2π. Solid faces must be pushed back to front, because each one is painted over the last to hide the lines behind it. Open lines (`open: true`) have no fill and can go in any order.
