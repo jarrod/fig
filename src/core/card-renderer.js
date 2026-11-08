@@ -42,11 +42,16 @@ export function createRenderer(post) {
     }
   }
 
-  const timeOf = (card, now) => ((now % card.loop) / card.loop) * TAU;
+  // Each card keeps its own place in its loop: it starts from the still
+  // drawing, pauses where it is, and carries on from there next time.
+  const timeOf = (card, now) => {
+    const ms = card.playing ? now - card.start : card.paused;
+    return ((ms % card.loop) / card.loop) * TAU;
+  };
 
   const handlers = {
     add({ id, canvas }) {
-      cards.set(id, { canvas, ctx: canvas.getContext('2d'), box: null, faces: [] });
+      cards.set(id, { canvas, ctx: canvas.getContext('2d'), box: null, faces: [], playing: false, paused: 0, start: 0 });
     },
 
     size({ id, width, height }) {
@@ -71,19 +76,34 @@ export function createRenderer(post) {
         animate,
         loop: loopMs(design, speed),
         box: faces.length ? fitDesign(design, seed, detail, animate, frame) : null,
+        // A new drawing starts its loop from the beginning.
+        paused: 0,
+        start: now,
       });
-      // An animated card picks up where the shared clock is, so it doesn't
-      // jump from the still drawing on its first frame.
-      card.faces = animate && card.box ? build(design, seed, detail, timeOf(card, now), frame).faces : faces;
+      card.faces = faces;
       draw(card, card.faces);
       post({ type: 'ready', id, gen, name: design.name(facts), body: describeDesign(design, facts, faces.length) });
     },
 
-    // One tick of the shared clock: redraw every listed card at that time.
+    play({ id, now }) {
+      const card = cards.get(id);
+      if (!card || card.playing) return;
+      card.playing = true;
+      card.start = now - card.paused;
+    },
+
+    pause({ id, now }) {
+      const card = cards.get(id);
+      if (!card?.playing) return;
+      card.playing = false;
+      card.paused = now - card.start;
+    },
+
+    // One tick of the shared clock: redraw every playing card listed.
     frame({ now, ids }) {
       for (const id of ids) {
         const card = cards.get(id);
-        if (!card?.animate || !card.box) continue;
+        if (!card?.playing || !card.animate || !card.box) continue;
         card.faces = build(card.design, card.seed, card.detail, timeOf(card, now), card.frame).faces;
         draw(card, card.faces);
       }

@@ -6,6 +6,10 @@
 //
 // When its drawing is ready the element gets a `ready` attribute and fires a
 // `gen-card-ready` event, so a page can show a placeholder until then.
+//
+// `animate` loops the drawing while the card is on screen; `animate="hover"`
+// loops it only while the pointer is over the card or it has keyboard focus,
+// and pauses it where it is otherwise.
 import * as pool from './core/card-pool.js';
 import { HEIGHT, WIDTH } from './core/frame.js';
 
@@ -34,6 +38,7 @@ class GenCard extends HTMLElement {
   #id = 0;
   #near = false;
   #visible = false;
+  #hovered = false;
   #built = '';
   #observers = [];
 
@@ -83,10 +88,35 @@ class GenCard extends HTMLElement {
     });
     seen.observe(this);
     this.#observers = [sized, near, seen];
+
+    // Hover and keyboard focus, for animate="hover". A card inside a link
+    // gets focus through the link, so focus is watched there.
+    const focusable = this.closest('a, button, [tabindex]') ?? this;
+    const on = () => {
+      this.#hovered = true;
+      this.#sync();
+    };
+    const off = () => {
+      this.#hovered = false;
+      this.#sync();
+    };
+    const listen = [
+      [this, 'pointerenter', on],
+      [this, 'pointerleave', off],
+      [focusable, 'focusin', on],
+      [focusable, 'focusout', off],
+    ];
+    for (const [target, type, fn] of listen) target.addEventListener(type, fn);
+    this.#unlisten = () => {
+      for (const [target, type, fn] of listen) target.removeEventListener(type, fn);
+    };
   }
+
+  #unlisten = () => {};
 
   disconnectedCallback() {
     for (const o of this.#observers) o.disconnect();
+    this.#unlisten();
     pool.disconnect(this.#id);
     this.#id = 0;
   }
@@ -123,7 +153,8 @@ class GenCard extends HTMLElement {
   }
 
   #sync() {
-    pool.animate(this.#id, Boolean(this.#built) && this.#visible && this.#settings().animate);
+    const hoverOnly = this.getAttribute('animate') === 'hover';
+    pool.animate(this.#id, Boolean(this.#built) && this.#visible && this.#settings().animate && (!hoverOnly || this.#hovered));
   }
 
   #meta() {

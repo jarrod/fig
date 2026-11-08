@@ -3,6 +3,7 @@
 // the page's main thread only sends messages. One shared clock drives every
 // animated card, and a worker is only sent the next frame once it has
 // finished the last, so a slow design drops frames instead of piling up work.
+// Each card keeps its own place in its loop, so it can pause and resume.
 //
 // Where OffscreenCanvas isn't supported, the same renderer runs on the main
 // thread, one message per task, so the page still stays responsive.
@@ -87,17 +88,20 @@ export function build(id, settings) {
   if (!card) return;
   card.gen++;
   card.worker.send({ type: 'init', id, gen: card.gen, now: performance.now(), ...settings });
+  // A playing card restarts its new drawing from the beginning.
+  if (card.active) card.worker.send({ type: 'play', id, now: performance.now() });
 }
 
 export function resize(id, width, height) {
   cards.get(id)?.worker.send({ type: 'size', id, width, height });
 }
 
-// Whether the shared clock should animate this card.
+// Plays or pauses a card's animation. A paused card keeps its place.
 export function animate(id, on) {
   const card = cards.get(id);
-  if (!card) return;
+  if (!card || card.active === on) return;
   card.active = on;
+  card.worker.send({ type: on ? 'play' : 'pause', id, now: performance.now() });
   if (on && !raf) raf = requestAnimationFrame(tick);
 }
 

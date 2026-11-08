@@ -20,7 +20,7 @@ The site runs at http://localhost:5174. It's built with React, Tailwind CSS v4 a
 
 ## The site
 
-- **Gallery** (`/`): every design as a card at fixed settings (detail 5, normal speed, the default frame, a random seed per visit), with one switch for animation. A skeleton shows in each card's place until its drawing is ready.
+- **Gallery** (`/`): every design as a card at fixed settings (detail 5, normal speed, the default frame, a random seed per visit), and a card animates while it is hovered or has keyboard focus, then pauses where it is. A skeleton shows in each card's place until its drawing is ready.
 - **Design page** (`/?d=flows&seed=6470&detail=5`): a large preview with seed, frame, detail, animation, speed, line colour, background, transparency and line width. Every setting is kept in the URL, so links can be shared.
 - **Export**: download an SVG, copy its code, or download an animated SVG that loops on its own with SMIL (no script). Animated files morph each shape smoothly when every frame has the same shapes, and otherwise swap whole frames.
 
@@ -42,7 +42,7 @@ Solid designs hide lines by filling each face with the background colour, so the
 
 Each card draws to a canvas, from the same path data as the downloadable SVG and with the same fills and strokes. The maths and the drawing run on a small pool of Web Workers (`src/core/card-pool.js`, `src/core/card-renderer.js`, `src/workers/card-worker.js`): each card hands its canvas to a worker as an OffscreenCanvas, so the page itself never waits. A card only starts building as it nears the viewport. One shared clock drives every animated card that is on screen, and a worker is only sent the next frame once it has drawn the last, so a slow design drops frames rather than holding up the page. Where OffscreenCanvas isn't supported, the same renderer runs on the main thread, one card per task. When its drawing is ready a card gets a `ready` attribute and fires a `gen-card-ready` event.
 
-Add `animate` to loop the drawing by moving its own seeded values, and `speed` (for example `0.5`) to slow it down or speed it up. Each design sets its own loop length for normal speed. Add `frame` (`fill`, `square`, `circle` or `hexagon`) to change the frame of a field design; other designs ignore it. Cards stay still for viewers who have reduced motion turned on. Every card is the same size: the heading keeps to one line and the description to four (set `--gen-card-lines` to change it), with the full text in a tooltip.
+Add `animate` to loop the drawing while the card is on screen, or `animate="hover"` to loop it only while it is hovered or focused. With plain `animate`, it loops by moving its own seeded values, and `speed` (for example `0.5`) to slow it down or speed it up. Each design sets its own loop length for normal speed. Add `frame` (`fill`, `square`, `circle` or `hexagon`) to change the frame of a field design; other designs ignore it. Cards stay still for viewers who have reduced motion turned on. Every card is the same size: the heading keeps to one line and the description to four (set `--gen-card-lines` to change it), with the full text in a tooltip.
 
 ## Layout
 

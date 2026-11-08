@@ -43,7 +43,9 @@ export function GenCard({ form, seed, detail, fig, speed, animate, frame }) {
       if (value === undefined) card.removeAttribute(name);
       else if (card.getAttribute(name) !== String(value)) card.setAttribute(name, value);
     }
-    card.toggleAttribute('animate', Boolean(animate));
+    // `animate` is true for always, or a string such as 'hover'.
+    if (typeof animate === 'string') card.setAttribute('animate', animate);
+    else card.toggleAttribute('animate', Boolean(animate));
   }, [form, seed, detail, fig, speed, animate, frame]);
 
   useEffect(() => {
