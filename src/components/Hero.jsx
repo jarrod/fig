@@ -46,7 +46,7 @@ export function Hero() {
       />
 
       {/* Text on the left, the drawing on the right; stacked on phones. */}
-      <div className="relative mx-auto grid max-w-6xl items-center gap-x-12 gap-y-4 px-4 pt-16 pb-12 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:pt-20 md:pb-16">
+      <div className="relative mx-auto grid max-w-6xl items-center gap-x-12 gap-y-4 px-4 pt-6 pb-12 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:pt-4 md:pb-16">
         <div>
           <h1
             id="hero-title"
