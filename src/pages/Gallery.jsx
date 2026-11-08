@@ -23,7 +23,6 @@ const hrefFor = (design, seed) => `?d=${design.id}&seed=${seed}&detail=${DETAIL}
 
 // Any design at any seed, for the hero's "Surprise me".
 const surprise = () => hrefFor(DESIGNS[Math.floor(Math.random() * DESIGNS.length)], randomSeed());
-const STAGE_INDEX = DESIGNS.findIndex((d) => d.id === 'minimal');
 
 export default function Gallery() {
   const [seeds, setSeeds] = useState(saved);
@@ -42,9 +41,6 @@ export default function Gallery() {
   return (
     <>
       <Hero
-        count={DESIGNS.length}
-        stageHref={hrefFor(DESIGNS[STAGE_INDEX], 77)}
-        stageFig={`0.${STAGE_INDEX + 1}`}
         surpriseHref={surpriseHref}
         // A fresh pick for next time, once this one has been followed.
         onSurprise={() => setTimeout(() => setSurpriseHref(surprise()), 0)}
