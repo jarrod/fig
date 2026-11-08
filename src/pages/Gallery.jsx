@@ -47,7 +47,7 @@ export default function Gallery() {
           // The button sits beside the link rather than inside it, since a
           // link can't contain another control.
           return (
-            <div key={design.id} className="group relative">
+            <div key={design.id} className="group relative [--gen-card-title-gap:30px]">
               <Link
                 href={hrefFor(design, seed)}
                 aria-label={`Open ${design.id}, seed ${seed}`}
@@ -61,7 +61,7 @@ export default function Gallery() {
                 aria-label={`New seed for ${design.id}`}
                 title="New seed"
                 onClick={() => reshuffle(design.id)}
-                className="absolute top-9 right-[18px] z-10 border-[#26292b] bg-[#0e1011]/85 text-[#858a8f] opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-[#1a1d1f] hover:text-[#d7dade] focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
+                className="absolute right-3.5 bottom-3.5 z-10 border-[#26292b] bg-[#0e1011]/85 text-[#858a8f] opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-[#1a1d1f] hover:text-[#d7dade] focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
               >
                 <DicesIcon />
               </Button>

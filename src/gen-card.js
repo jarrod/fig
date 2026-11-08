@@ -22,8 +22,9 @@ const STYLE = `
   canvas { display: block; width: 100%; height: 100%; opacity: 0; }
   :host([ready]) canvas { opacity: 1; }
   @media (prefers-reduced-motion: no-preference) { canvas { transition: opacity 0.35s; } }
-  /* One line, so every card is the same size. */
-  h3 { margin: 0; font: 500 14px/1.4 system-ui, sans-serif; color: #d7dade; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* One line, so every card is the same size. A page can keep room at its end
+     for a control of its own with --gen-card-title-gap. */
+  h3 { margin: 0; padding-right: var(--gen-card-title-gap, 0); font: 500 14px/1.4 system-ui, sans-serif; color: #d7dade; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 `;
 
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
