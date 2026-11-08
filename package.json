@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 5174 --strictPort",
-    "build": "vite build"
+    "build": "vite build",
+    "banner": "node scripts/readme-banner.mjs"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.5",

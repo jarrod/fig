@@ -1,8 +1,6 @@
-# Gen Cards
-
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="media/contours-dark.svg">
-  <img src="media/contours-light.svg" width="480" alt="Animated Perlin contours, seed 6470">
+  <source media="(prefers-color-scheme: dark)" srcset="media/banner-dark.svg">
+  <img src="media/banner-light.svg" width="100%" alt="Gen Cards: generative line drawings, exported as SVG">
 </picture>
 
 A collection of generative line drawings. Each design is made by one algorithm (Perlin noise, a Hilbert curve, a Lorenz attractor, reaction–diffusion and so on). Pick a design, change its seed and style, and export it as an SVG to use on your own site.
@@ -17,6 +15,8 @@ npm run dev
 ```
 
 The site runs at http://localhost:5174. It's built with React, Tailwind CSS v4 and [shadcn/ui](https://ui.shadcn.com) on Base UI (style `base-nova`), on Vite. Add more shadcn components with `npx shadcn@latest add <name>`; they land in `src/components/ui/`. `npm run build` writes a static site to `dist/` that works on any static host. It assumes it's served from the root of a domain; to host it under a sub-path, set `base` in a Vite config.
+
+`npm run banner` rebuilds the README banner (`media/banner-light.svg` and `media/banner-dark.svg`). It's set in `scripts/readme-banner.mjs`, where you can change the design, seed and detail.
 
 ## The site
 
