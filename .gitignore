@@ -2,3 +2,10 @@ node_modules
 dist
 .DS_Store
 *.local
+.wrangler
+# Deploy config stays local
+wrangler.json
+wrangler.jsonc
+wrangler.toml
+.dev.vars*
+.env*
