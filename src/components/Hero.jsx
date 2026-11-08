@@ -55,8 +55,7 @@ export function Hero() {
       />
 
       {/* Text on the left, the drawing on the right; stacked on phones. */}
-      {/* The logo's plates are filled with the hero's own background. */}
-      <SiteBar className="relative mx-auto max-w-6xl px-4 pt-2 [--background:#08090a]" />
+      <SiteBar className="relative mx-auto max-w-6xl px-4 pt-2" />
 
       <div className="relative mx-auto grid max-w-6xl items-center gap-x-12 gap-y-4 px-4 pt-4 pb-12 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:pt-0 md:pb-16">
         <div>
